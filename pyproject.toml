@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "martinpdes-maintenance"
-version = "0.2.1"
+version = "0.2.2"
 description = "Shared release preparation and metadata checks for scientific Python projects"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -13,8 +13,7 @@ license-files = ["LICENSE"]
 dependencies = ["tomli>=2; python_version < '3.11'"]
 
 [project.optional-dependencies]
-testing = ["pytest>=8,<10", "setuptools-scm>=8,<10"]
-scm = ["setuptools-scm>=8,<10"]
+testing = ["pytest>=8,<10"]
 dev = ["pytest>=8,<10", "ruff==0.17.2", "build>=1,<2", "twine>=6,<7"]
 
 [project.scripts]
@@ -30,3 +29,5 @@ line-length = 100
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.mps-maintenance]

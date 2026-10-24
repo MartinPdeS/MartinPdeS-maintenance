@@ -3,11 +3,9 @@
 import argparse
 import difflib
 import json
-import os
 import re
 import subprocess
 import sys
-import tempfile
 from datetime import date
 from pathlib import Path
 
@@ -29,13 +27,21 @@ def git(root, *args):
 def load(root):
     """Load project metadata and validate explicitly configured release paths."""
     project = tomllib.loads((root / "pyproject.toml").read_text())
-    config = project.get("tool", {}).get("mps-maintenance", {})
-    allowed = {"version-file", "version-method", "conda-recipe", "zenodo", "citation"}
-    if not config or set(config) - allowed:
+    config = project.get("tool", {}).get("mps-maintenance")
+    allowed = {
+        "version-file",
+        "version-method",
+        "conda-recipe",
+        "zenodo",
+        "citation",
+        "changelog",
+        "repository",
+    }
+    if not isinstance(config, dict) or set(config) - allowed:
         raise ValueError("Configure [tool.mps-maintenance]; unknown settings are not allowed")
-    if config.get("version-method", "literal") not in {"literal", "setuptools-scm"}:
-        raise ValueError("version-method must be literal or setuptools-scm")
-    for key in allowed - {"version-method"}:
+    if config.get("version-method", "literal") != "literal":
+        raise ValueError("Only explicit literal versioning is supported")
+    for key in allowed - {"version-method", "repository"}:
         if key not in config:
             continue
         value = config[key]
@@ -49,14 +55,12 @@ def load(root):
     if "version-method" in config and "version-file" not in config:
         raise ValueError("version-method requires version-file")
     metadata = project["project"]
-    dynamic = "version" in metadata.get("dynamic", [])
-    if dynamic:
-        if "version" in metadata:
-            raise ValueError("Project version cannot be both static and dynamic")
-        if config.get("version-method") != "setuptools-scm" or "version-file" not in config:
-            raise ValueError("Dynamic versions require setuptools-scm and a version-file")
-    elif "version" not in metadata:
-        raise ValueError("Project must declare a static or dynamic version")
+    if "version" in metadata.get("dynamic", []) or "version" not in metadata:
+        raise ValueError("Declare an explicit [project].version; dynamic versioning is unsupported")
+    if "changelog" in config and not re.fullmatch(
+        r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", config.get("repository", "")
+    ):
+        raise ValueError("changelog requires repository = 'owner/name'")
     return project, config
 
 
@@ -69,11 +73,7 @@ def replace(text, pattern, replacement):
 
 def fields(root, config):
     """Return configured version fields and their regular expressions."""
-    metadata = tomllib.loads((root / "pyproject.toml").read_text())["project"]
-    result = {}
-    if "version" not in metadata.get("dynamic", []):
-        result["pyproject.toml"] = r'(?m)(^version\s*=\s*)["\']([^"\']+)["\']'
-
+    result = {"pyproject.toml": r'(?m)(^version\s*=\s*)["\']([^"\']+)["\']'}
     for key, pattern in {
         "version-file": r'(^__version__\s*=\s*version\s*=\s*)["\']([^"\']+)["\']',
         "conda-recipe": r'(^[ \t]*version:[ \t]*)["\']?([^\s"\'#]+)["\']?',
@@ -120,29 +120,32 @@ def plan(root, config, version, release_date):
         data = json.loads((root / path).read_text())
         data.update(version=version, publication_date=release_date)
         updates[path] = json.dumps(data, indent=2) + "\n"
-    if config.get("version-method") == "setuptools-scm":
-        # Generate into a temporary destination, keeping planning read-only for the repository.
-        with tempfile.TemporaryDirectory() as directory:
-            destination = Path(directory) / "_version.py"
-            subprocess.run(
-                [
-                    sys.executable,
-                    "-c",
-                    (
-                        "from setuptools_scm import get_version; "
-                        "import sys; get_version(root=sys.argv[1], write_to=sys.argv[2], "
-                        "version_scheme='only-version', local_scheme='no-local-version')"
-                    ),
-                    str(Path(directory).resolve()),
-                    str(destination.resolve()),
-                ],
-                check=True,
-                capture_output=True,
-                text=True,
-                env={**os.environ, "SETUPTOOLS_SCM_PRETEND_VERSION": version},
-            )
-            updates[config["version-file"]] = destination.read_text()
+    if "changelog" in config:
+        path = config["changelog"]
+        updates[path] = update_changelog(
+            (root / path).read_text(), version, release_date, config["repository"]
+        )
     return updates
+
+
+def update_changelog(text, version, release_date, repository):
+    """Roll an Unreleased section into a dated release, preserving its entries."""
+    if re.search(r"^## \[" + re.escape(version) + r"\]", text, re.MULTILINE):
+        raise ValueError(f"Changelog already contains release {version}")
+    text = replace(
+        text,
+        r"^## \[Unreleased\]$",
+        lambda m: f"{m[0]}\n\n## [{version}] - {release_date}",
+    )
+    base = f"https://github.com/{repository}"
+    return replace(
+        text,
+        r"^\[Unreleased\]:.*$",
+        lambda m: (
+            f"[Unreleased]: {base}/compare/v{version}...HEAD\n"
+            f"[{version}]: {base}/releases/tag/v{version}"
+        ),
+    )
 
 
 def main(argv=None):
@@ -169,7 +172,11 @@ def main(argv=None):
                 if (m := TAG.fullmatch(t))
             ]
             if not tags:
-                raise ValueError("No stable semantic-version tag found")
+                project = tomllib.loads((root / "pyproject.toml").read_text())["project"]
+                match = TAG.fullmatch("v" + project["version"])
+                if match is None:
+                    raise ValueError("Project version must use MAJOR.MINOR.PATCH")
+                tags = [tuple(map(int, match.groups()))]
             numbers = list(max(tags))
             index = ["major", "minor", "patch"].index(args.kind)
             numbers[index] += 1
@@ -184,13 +191,23 @@ def main(argv=None):
             ).removeprefix("v")
             for path, value in declared.items():
                 print(f"{'OK' if value == expected else 'MISMATCH'} {path}: {value}")
-            return int(any(value != expected for value in declared.values()))
+            failed = False
+            for path, value in declared.items():
+                if value != expected:
+                    print(f"{path} declares {value}; expected {expected}", file=sys.stderr)
+                    failed = True
+            if "changelog" in config:
+                text = (root / config["changelog"]).read_text()
+                if not re.search(r"^## \[" + re.escape(expected) + r"\]", text, re.MULTILINE):
+                    print(f"Changelog has no release section for {expected}", file=sys.stderr)
+                    failed = True
+            return int(failed)
         match = TAG.fullmatch(args.tag)
         if not match:
             raise ValueError("Tag must use vMAJOR.MINOR.PATCH")
         date.fromisoformat(args.date)
         if git(root, "status", "--porcelain", "--untracked-files=all"):
-            raise ValueError("Working tree must be clean")
+            raise ValueError("working tree is not clean")
         if git(root, "tag", "--list", args.tag):
             raise ValueError("Tag already exists")
         if git(root, "rev-parse", "--is-shallow-repository") == "true":

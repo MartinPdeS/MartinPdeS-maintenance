@@ -1,54 +1,51 @@
 # martinpdes-maintenance
 
-Shared release preparation for the MartinPdeS scientific Python ecosystem.
-The distribution is `martinpdes-maintenance`; its command is `mps-maintenance`.
-Python 3.10 and newer are supported. The Python package lives directly in
-`martinpdes_maintenance/`, following the flat layout used by MartinPdeS-docs.
+One release method for the MartinPdeS Python ecosystem: explicit project versions,
+updated by a shared command. Python 3.10+; flat package layout.
 
 ## Install
 
-From a source checkout:
-
 ```sh
-python -m pip install -e ".[dev,scm]"
+python -m pip install "martinpdes-maintenance==0.2.2"
+# Development checkout:
+python -m pip install -e ".[dev,testing]"
 ```
 
-This repository has not yet been published on PyPI. After publication, consumers
-can pin a reviewed version in their release development extra. The tool is not
-a runtime dependency of scientific packages.
+This is a release-development dependency, never a consumer runtime dependency.
 
-## Configure a consuming project
+## Configuration
 
-Add explicit settings to the consumer's `pyproject.toml`:
+Declare a static `[project].version` and add a configuration table:
 
 ```toml
 [tool.mps-maintenance]
 version-file = "DeepPeak/_version.py"
-version-method = "setuptools-scm"
+version-method = "literal"
 conda-recipe = "conda.recipe/meta.yaml"
 ```
 
-Use `version-method = "literal"` (the default) to update a simple
-`__version__ = version = "X.Y.Z"` assignment directly. SCM mode requires this
-tool's `scm` extra and generates the file using setuptools-scm. Optional settings:
+`version-file` updates a `__version__ = version = "X.Y.Z"` assignment. Optional
+`zenodo = ".zenodo.json"` updates version and publication date;
+`citation = "CITATION.cff"` updates its existing version field, preserving dates.
+All configured files must exist inside the repository. Unknown keys are errors.
+Conda recipe versions must be literal. Dynamic project versions are unsupported.
+A project with only distribution metadata can use an empty `[tool.mps-maintenance]`.
+
+For Keep a Changelog release preparation, configure:
 
 ```toml
-zenodo = ".zenodo.json"
-citation = "CITATION.cff"
+changelog = "CHANGELOG.md"
+repository = "MartinPdeS/PyFiberModes"
 ```
 
-All configured files must already exist inside the repository. Unknown settings
-are errors. Project versions may be static in `[project].version`, or declared with
-`dynamic = ["version"]`. Dynamic projects require `version-method = "setuptools-scm"`
-and a configured version file; their project table is never rewritten. Conda recipes
-must contain one literal `version:` field. Jinja-templated recipe versions and
-prerelease creation are not supported in this initial implementation. Citation
-updates currently change the version only, preserving existing date behavior.
+The changelog must have one `## [Unreleased]` heading and one `[Unreleased]:`
+comparison link. Releasing moves its entries under a dated version heading and
+updates the comparison and release links. Checks require a section for the
+current project version.
 
 ## Commands
 
-Run from the consumer repository root, or supply `--root /path/to/repository`
-before the subcommand:
+Run at the repository root, or put `--root /path/to/repository` before the command:
 
 ```sh
 mps-maintenance check
@@ -57,44 +54,33 @@ mps-maintenance next patch
 mps-maintenance tag v1.2.4 --dry-run
 ```
 
-`next` selects the highest stable `vMAJOR.MINOR.PATCH` tag available locally,
-including tags not reachable from HEAD. It ignores prerelease and unrelated tags;
-fetch tags first when remote releases may be missing. It fails if no stable tag exists.
+`next` increments the highest stable semantic tag, including unreachable tags.
+If there are no stable tags, it increments the explicit project version. Fetch
+remote tags first; unrelated and prerelease tags are ignored. This selects a
+release number; build versions always come from explicit project metadata.
 
-`tag` requires a clean, full Git checkout and an unused stable tag. It calculates
-all replacements before writing, prints a diff, validates updated versions,
-stages the release files, commits, then creates an annotated tag. `--dry-run`
-prints the plan without writing repository files, staging, committing, or tagging.
-Zenodo publication dates default to the local calendar date; `--date YYYY-MM-DD`
-sets a reproducible date explicitly.
+`tag` requires a clean, full checkout and an unused `vMAJOR.MINOR.PATCH` tag.
+It plans all replacements before writing, prints a diff, validates updated
+metadata, stages only configured files, commits, and creates an annotated tag.
+`--dry-run` changes no repository files, commits, index entries, or tags.
+`--date YYYY-MM-DD` controls Zenodo and changelog dates; the default is the local
+calendar date. Prerelease creation is unsupported. Nothing is pushed.
 
-To actually create the release commit and tag, omit `--dry-run`. Nothing is
-pushed. Existing Makefile push behavior should remain in the consumer repository.
-A commit or tag failure leaves state for inspection: use `git status` and
-`git log -1`, fix the cause, and recover explicitly. A tag failure can leave a
-successful release commit. Do not blindly rerun or reset unrelated work.
-
-## Migration
-
-1. Install a reviewed tool revision in the release environment.
-2. Configure every file the old scripts check or update.
-3. Compare `check`, `next`, and dry-run output with the old scripts.
-4. Replace old script bodies with thin CLI wrappers, preserving Makefile behavior.
-5. Verify in a disposable clone before removing compatibility wrappers.
-
-DeepPeak uses SCM generation; PyMieSim and PackLab additionally update Zenodo;
-BornSim uses literal generation plus Zenodo and Citation metadata. No consumer
-repositories are migrated automatically.
+On write/validation failure original files are restored. A commit or tag failure
+leaves recoverable state: inspect `git status` and `git log -1` before retrying.
+A failed tag operation can leave a successful release commit. Never blindly reset
+unrelated work.
 
 ## Development
 
 ```sh
 python -m pytest
-python -m ruff check .
-python -m ruff format --check .
+python -m ruff check martinpdes_maintenance tests
+python -m ruff format --check martinpdes_maintenance tests
 python -m build
 python -m twine check dist/*
 ```
 
-Tests create local temporary Git repositories and never push or publish.
-See CONTRIBUTING.md for release bootstrapping.
+Tests use temporary local Git repositories and never publish. Source release
+wrappers and Makefile shortcuts in consumers delegate to this tool. Native build,
+scientific test, and registry publishing logic remains outside it.
