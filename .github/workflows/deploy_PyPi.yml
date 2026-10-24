@@ -1,0 +1,33 @@
+name: Publish release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    uses: MartinPdeS/MPSActions/.github/workflows/build_pure_package.yml@v2
+    with:
+      python_version: "3.11"
+      test_import: martinpdes_maintenance
+      artifact_identity: wheels-pure
+      download_retries: 3
+      retry_delay_seconds: 10
+
+  publish:
+    needs: build
+    permissions:
+      contents: read
+      id-token: write
+    uses: MartinPdeS/MPSActions/.github/workflows/publish_distributions.yml@v2
+    with:
+      registry: pypi
+      artifact_identities: '["wheels-pure"]'
+      python_version: "3.11"
+      download_retries: 3
+      retry_delay_seconds: 10
+    secrets:
+      PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}

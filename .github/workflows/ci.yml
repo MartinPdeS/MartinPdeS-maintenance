@@ -3,19 +3,26 @@ on: [push, pull_request]
 permissions:
   contents: read
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python }}
-      - run: python -m pip install -e ".[dev,scm]"
-      - run: python -m pytest -q
-      - run: python -m ruff check .
-      - run: python -m ruff format --check .
-      - run: python -m build
-      - run: python -m twine check dist/*
+  tests:
+    uses: MartinPdeS/MPSActions/.github/workflows/run_tests.yml@v2
+    with:
+      python-versions: '["3.10", "3.11", "3.12", "3.13", "3.14"]'
+      install-command: python -m pip install -e ".[testing]"
+      test-command: python -m pytest -q
+
+  quality:
+    uses: MartinPdeS/MPSActions/.github/workflows/run_quality.yml@v2
+    with:
+      install-command: python -m pip install -e ".[dev]"
+      quality-command: |
+        python -m ruff check .
+        python -m ruff format --check .
+
+  build:
+    uses: MartinPdeS/MPSActions/.github/workflows/build_pure_package.yml@v2
+    with:
+      python_version: "3.11"
+      test_import: martinpdes_maintenance
+      artifact_identity: wheels-pure
+      download_retries: 3
+      retry_delay_seconds: 10

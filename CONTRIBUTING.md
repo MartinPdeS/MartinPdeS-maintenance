@@ -11,7 +11,7 @@ Install `.[dev,scm]` and run the checks in README.md. CI covers Python 3.10–3.
 
 The initial release is bootstrapped manually; the tool does not depend on itself.
 Update `[project].version`, run checks, build and inspect the wheel and sdist,
-commit the reviewed change, and create a matching annotated tag. Publication is
-manual using `python -m twine upload dist/*` after explicit authorization and
-registry setup. No workflow automatically publishes packages or creates releases.
+commit the reviewed change, and create a matching annotated tag. Pushing a `v*` tag triggers the same MPSActions build and PyPI publication
+workflows used by MartinPdeS-docs. Configure the repository PYPI_API_TOKEN secret
+before publishing. Ordinary branch pushes and pull requests build and test only.
 Before the first publication, confirm distribution-name availability and metadata.
