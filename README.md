@@ -38,7 +38,9 @@ citation = "CITATION.cff"
 ```
 
 All configured files must already exist inside the repository. Unknown settings
-are errors. Project versions must be static in `[project].version`; Conda recipes
+are errors. Project versions may be static in `[project].version`, or declared with
+`dynamic = ["version"]`. Dynamic projects require `version-method = "setuptools-scm"`
+and a configured version file; their project table is never rewritten. Conda recipes
 must contain one literal `version:` field. Jinja-templated recipe versions and
 prerelease creation are not supported in this initial implementation. Citation
 updates currently change the version only, preserving existing date behavior.

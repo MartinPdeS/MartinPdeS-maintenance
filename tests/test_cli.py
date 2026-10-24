@@ -131,3 +131,34 @@ def test_failed_commit_leaves_metadata_for_recovery(repo):
     assert git(repo, "tag", "--list", "v1.2.4") == ""
     assert call(repo, "check", "--version", "v1.2.4") == 0
     assert git(repo, "diff", "--cached", "--name-only")
+
+
+def test_dynamic_scm_preserves_project_and_unconfigured_metadata(repo):
+    p = repo / "pyproject.toml"
+    text = (
+        '[project]\nname = "example"\ndynamic = ["version"]\n'
+        '[tool.mps-maintenance]\nversion-file = "_version.py"\n'
+        'version-method = "setuptools-scm"\n'
+    )
+    p.write_text(text)
+    git(repo, "add", ".")
+    git(repo, "commit", "-m", "Dynamic SCM fixture")
+    assert call(repo, "check") == 0
+    assert call(repo, "check", "--version", "v0.0.1") == 1
+    assert call(repo, "tag", "v1.2.4", "--dry-run") == 0
+    assert git(repo, "status", "--porcelain") == ""
+    assert call(repo, "tag", "v1.2.4") == 0
+    assert call(repo, "check", "--version", "v1.2.4") == 0
+    assert p.read_text() == text
+    assert json.loads((repo / ".zenodo.json").read_text())["version"] == "1.2.3"
+    assert git(repo, "diff", "HEAD~1", "--name-only") == "_version.py"
+
+
+@pytest.mark.parametrize("method", ["literal", "missing"])
+def test_dynamic_requires_scm_configuration(repo, method):
+    p = repo / "pyproject.toml"
+    text = p.read_text().replace('version = "1.2.3"', 'dynamic = ["version"]')
+    if method == "literal":
+        text += 'version-method = "literal"\n'
+    p.write_text(text)
+    assert call(repo, "check") == 1

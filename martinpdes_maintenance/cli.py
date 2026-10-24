@@ -48,6 +48,15 @@ def load(root):
             raise ValueError(f"{key} must name an existing regular file")
     if "version-method" in config and "version-file" not in config:
         raise ValueError("version-method requires version-file")
+    metadata = project["project"]
+    dynamic = "version" in metadata.get("dynamic", [])
+    if dynamic:
+        if "version" in metadata:
+            raise ValueError("Project version cannot be both static and dynamic")
+        if config.get("version-method") != "setuptools-scm" or "version-file" not in config:
+            raise ValueError("Dynamic versions require setuptools-scm and a version-file")
+    elif "version" not in metadata:
+        raise ValueError("Project must declare a static or dynamic version")
     return project, config
 
 
@@ -60,7 +69,11 @@ def replace(text, pattern, replacement):
 
 def fields(root, config):
     """Return configured version fields and their regular expressions."""
-    result = {"pyproject.toml": r'(?m)(^version\s*=\s*)["\']([^"\']+)["\']'}
+    metadata = tomllib.loads((root / "pyproject.toml").read_text())["project"]
+    result = {}
+    if "version" not in metadata.get("dynamic", []):
+        result["pyproject.toml"] = r'(?m)(^version\s*=\s*)["\']([^"\']+)["\']'
+
     for key, pattern in {
         "version-file": r'(^__version__\s*=\s*version\s*=\s*)["\']([^"\']+)["\']',
         "conda-recipe": r'(^[ \t]*version:[ \t]*)["\']?([^\s"\'#]+)["\']?',
@@ -166,7 +179,9 @@ def main(argv=None):
         _, config = load(root)
         if args.command == "check":
             declared = versions(root, config)
-            expected = (args.version or declared["pyproject.toml"]).removeprefix("v")
+            expected = (
+                args.version or declared.get("pyproject.toml") or declared[config["version-file"]]
+            ).removeprefix("v")
             for path, value in declared.items():
                 print(f"{'OK' if value == expected else 'MISMATCH'} {path}: {value}")
             return int(any(value != expected for value in declared.values()))
