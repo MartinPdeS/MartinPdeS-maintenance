@@ -15,7 +15,7 @@ dependencies = ["tomli>=2; python_version < '3.11'"]
 [project.optional-dependencies]
 testing = ["pytest>=8,<10", "setuptools-scm>=8,<10"]
 scm = ["setuptools-scm>=8,<10"]
-dev = ["pytest>=8,<10", "ruff>=0.11,<1", "build>=1,<2", "twine>=6,<7"]
+dev = ["pytest>=8,<10", "ruff==0.17.2", "build>=1,<2", "twine>=6,<7"]
 
 [project.scripts]
 mps-maintenance = "martinpdes_maintenance.cli:main"

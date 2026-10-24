@@ -1,15 +1,15 @@
 """Command-line release operations; publishing remains the caller's responsibility."""
 
 import argparse
-from datetime import date
 import difflib
 import json
 import os
-from pathlib import Path
 import re
 import subprocess
 import sys
 import tempfile
+from datetime import date
+from pathlib import Path
 
 try:
     import tomllib
@@ -115,9 +115,11 @@ def plan(root, config, version, release_date):
                 [
                     sys.executable,
                     "-c",
-                    "from setuptools_scm import get_version; "
-                    "import sys; get_version(root=sys.argv[1], write_to=sys.argv[2], "
-                    "version_scheme='only-version', local_scheme='no-local-version')",
+                    (
+                        "from setuptools_scm import get_version; "
+                        "import sys; get_version(root=sys.argv[1], write_to=sys.argv[2], "
+                        "version_scheme='only-version', local_scheme='no-local-version')"
+                    ),
                     str(Path(directory).resolve()),
                     str(destination.resolve()),
                 ],
