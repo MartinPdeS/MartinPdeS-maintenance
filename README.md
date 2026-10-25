@@ -81,6 +81,7 @@ python -m build
 python -m twine check dist/*
 ```
 
-Tests use temporary local Git repositories and never publish. Source release
-wrappers and Makefile shortcuts in consumers delegate to this tool. Native build,
-scientific test, and registry publishing logic remains outside it.
+Tests use temporary local Git repositories and never publish. Consumer Makefile
+shortcuts call the installed module directly; no local release scripts are
+needed. Native build, scientific test, and registry publishing logic remains
+outside it.
