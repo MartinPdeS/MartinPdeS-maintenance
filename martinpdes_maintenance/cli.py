@@ -154,6 +154,11 @@ def main(argv=None):
     parser.add_argument("--root", type=Path, default=Path.cwd())
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("next").add_argument("kind", choices=["major", "minor", "patch"])
+    doctor = commands.add_parser(
+        "doctor", help="Inspect repository maintenance conventions without changes"
+    )
+    doctor.add_argument("--json", action="store_true", dest="json_output")
+    doctor.add_argument("--strict", action="store_true", help="Treat warnings as failures")
     check = commands.add_parser("check")
     check.add_argument("--version")
     tag = commands.add_parser("tag")
@@ -165,6 +170,10 @@ def main(argv=None):
     try:
         if Path(git(root, "rev-parse", "--show-toplevel")).resolve() != root:
             raise ValueError("--root must be the Git repository root")
+        if args.command == "doctor":
+            from .doctor import run_doctor
+
+            return run_doctor(root, json_output=args.json_output, strict=args.strict)
         if args.command == "next":
             tags = [
                 tuple(map(int, m.groups()))

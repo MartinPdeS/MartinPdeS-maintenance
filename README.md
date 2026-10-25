@@ -48,6 +48,7 @@ current project version.
 Run at the repository root, or put `--root /path/to/repository` before the command:
 
 ```sh
+mps-maintenance doctor
 mps-maintenance check
 mps-maintenance check --version v1.2.3
 mps-maintenance next patch
@@ -70,6 +71,31 @@ On write/validation failure original files are restored. A commit or tag failure
 leaves recoverable state: inspect `git status` and `git log -1` before retrying.
 A failed tag operation can leave a successful release commit. Never blindly reset
 unrelated work.
+
+## Repository doctor
+
+```sh
+mps-maintenance doctor
+mps-maintenance --root /path/to/project doctor --json
+mps-maintenance doctor --strict
+```
+
+Doctor is read-only and works with uncommitted changes. It checks explicit
+project versions, every configured release-version declaration, changelog release
+headings, SCM dependencies/providers, obsolete release wrappers, literal script
+and Sphinx source paths in Makefiles and root README/CONTRIBUTING files, and
+maintenance-tool installation before visible GitHub Actions commands.
+
+Each finding includes a stable diagnostic code, file path, and suggested fix.
+Errors return exit status 1; warnings return 0 unless `--strict` is used. `--json`
+returns counts and structured findings for automation. A healthy report returns 0.
+
+CI analysis recognizes explicit pip installs and local extras declaring the tool.
+It cannot interpret reusable workflow internals, composite actions, arbitrary
+shell control flow, dynamic paths, or the dependency graph of every CI tool.
+Unconfirmed installation produces a warning, not a claim that CI is broken.
+Doctor does not execute project commands, import consumer packages, contact
+services, install dependencies, or rewrite files.
 
 ## Development
 
