@@ -6,12 +6,28 @@ updated by a shared command. Python 3.10+; flat package layout.
 ## Install
 
 ```sh
-python -m pip install "martinpdes-maintenance==0.2.2"
+python -m pip install "martinpdes-maintenance==0.2.3"
 # Development checkout:
 python -m pip install -e ".[dev,testing]"
 ```
 
 This is a release-development dependency, never a consumer runtime dependency.
+
+## Shared development tools
+
+The optional `testing` extra supplies pytest and coverage; the `quality` extra
+also supplies mypy, numpydoc, Ruff, and the Python build frontend. Projects can
+select these extras in their own development dependencies as follows:
+
+```toml
+[project.optional-dependencies]
+testing = ["martinpdes-maintenance[testing]==0.2.3"]
+dev = ["martinpdes-maintenance[quality]==0.2.3"]
+```
+
+These extras install tools;
+projects keep their own tool configuration and any additional test dependencies.
+The base maintenance package stays lightweight for release operations.
 
 ## Configuration
 
