@@ -16,6 +16,7 @@
    :width: 100%
 
 {% endif %}
+{% if pypi or documentation or demo or test_workflow or coverage or conda or zenodo_doi %}
 .. list-table::
    :width: 100%
    :widths: 35 65
@@ -27,8 +28,10 @@
    * - Web app
      - |mps-demo|
 {% endif %}
+{% if pypi %}
    * - Python versions
      - |mps-python|
+{% endif %}
 {% if documentation %}
    * - Documentation
      - |mps-docs|
@@ -37,8 +40,10 @@
    * - {{ "Tests" if test_workflow else "Coverage" }}
      - {{ ["|mps-ci|" if test_workflow else "", "|mps-coverage|" if coverage else ""]|select|join(" ") }}
 {% endif %}
+{% if pypi %}
    * - PyPI
      - |mps-pypi| |mps-downloads|
+{% endif %}
 {% if conda %}
    * - Conda
      - |mps-conda| |mps-conda-downloads| |mps-conda-release|
@@ -48,6 +53,7 @@
      - |mps-zenodo|
 {% endif %}
 
+{% endif %}
 {{ description }}
 
 {{ introduction }}
@@ -56,6 +62,7 @@
 {{ render_figure(figure) }}
 {% endif %}
 
+{% if "installation" not in section_titles %}
 Installation
 ------------
 {% if python_requirement %}
@@ -63,9 +70,11 @@ Installation
 Requires Python ``{{ python_requirement }}``.
 {% endif %}
 
+{% if pypi %}
 .. code-block:: console
 
    $ python -m pip install {{ name }}
+{% endif %}
 {% if conda %}
 
 Install from the ``martinpdes`` Conda channel:
@@ -83,6 +92,7 @@ For an editable source installation:
    $ git clone https://github.com/{{ repository }}.git
    $ cd {{ repository.split('/')[-1] }}
    $ python -m pip install -e .
+{% endif %}
 {% endif %}
 {% if quickstart is not none %}
 
@@ -171,6 +181,7 @@ See the `{{ name }} license <{{ license_url }}>`__ for terms of use.
 {% endif %}
 
 {% endif %}
+{% if pypi %}
 .. |mps-python| image:: https://img.shields.io/pypi/pyversions/{{ slug }}.svg
    :alt: Supported Python versions
    :target: https://pypi.org/project/{{ slug }}/
@@ -182,6 +193,7 @@ See the `{{ name }} license <{{ license_url }}>`__ for terms of use.
 .. |mps-downloads| image:: https://img.shields.io/pypi/dm/{{ slug }}.svg
    :alt: Monthly PyPI downloads
    :target: https://pypistats.org/packages/{{ slug }}
+{% endif %}
 {% if demo %}
 
 .. |mps-demo| image:: https://img.shields.io/badge/Launch-{{ name|replace('-', '--')|replace('_', '__') }}-2672d6.svg

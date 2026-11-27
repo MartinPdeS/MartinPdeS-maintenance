@@ -189,8 +189,12 @@ def update_readme(*, root: Path, check: bool) -> None:
             "quickstart",
             "sections",
             "license_note",
+            "pypi",
         },
     )
+    pypi = config.get("pypi", True)
+    if not isinstance(pypi, bool):
+        raise ReadmeError("pypi must be a boolean")
     introduction = _text(value=config.get("introduction"), field="introduction")
 
     if "logo" in config:
@@ -366,6 +370,7 @@ def update_readme(*, root: Path, check: bool) -> None:
             contact_url=contact_url,
             docs_workflow=repository and (workflows / "deploy_documentation.yml").is_file(),
             test_workflow=test_workflow,
+            pypi=pypi,
             coverage=coverage,
             conda=_conda_package(root=root, repository=repository),
             python_requirement=python_requirement,

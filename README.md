@@ -111,6 +111,9 @@ sections:
       Explain how to cite this work.
 ```
 
+For source-only projects, set `pypi: false` to omit PyPI badges and the PyPI install command.
+A custom Installation section can supply project-specific build instructions.
+
 The header uses the distribution name for the Python versions, PyPI release and
 monthly download badges. All generated badges appear in a two-column Badge/Status
 table beneath the logo, with related test, PyPI, and Conda badges grouped by row. Logo discovery tries `<project name>/assets/logo/logo_light.svg`,
