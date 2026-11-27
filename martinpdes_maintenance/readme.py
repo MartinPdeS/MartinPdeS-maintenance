@@ -202,6 +202,9 @@ def update_readme(*, root: Path, check: bool) -> None:
             logo=logo,
             repository=repository,
             documentation=documentation,
+            custom_documentation=any(
+                section["title"].strip().casefold() == "documentation" for section in extra_sections
+            ),
             docs_workflow=repository and (workflows / "deploy_documentation.yml").is_file(),
             coverage=coverage,
             conda=_conda_package(root=root, repository=repository),

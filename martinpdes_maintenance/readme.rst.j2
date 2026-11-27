@@ -61,6 +61,13 @@ Quick start
 
 {{ quickstart|indent(3, first=true) }}
 {% endif %}
+{% if documentation and not custom_documentation %}
+
+Documentation
+-------------
+
+Read the `{{ name }} documentation <{{ documentation }}>`__.
+{% endif %}
 {% for section in sections %}
 
 {{ section.title }}

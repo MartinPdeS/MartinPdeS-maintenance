@@ -182,6 +182,10 @@ def test_conventional_branding(project):
         ".. image:: https://raw.githubusercontent.com/MartinPdeS/other/HEAD/docs/images/logo.png"
         in output
     )
+    assert (
+        "Documentation\n-------------\n\nRead the `ScatterPy documentation <https://docs.example.org/>`__."
+        in output
+    )
     assert ":target: https://docs.example.org/" in output
     assert "https://github.com/MartinPdeS/other/actions/workflows/deploy_coverage.yml" in output
     assert "https://anaconda.org/martinpdes/scatter-conda/badges/version.svg" in output
@@ -211,3 +215,19 @@ def test_templated_conda_name_is_not_guessed(project):
     output = (project / "README.rst").read_text()
     assert "conda install" not in output and "|mps-conda|" not in output
     assert "$ cd checkout" in output
+
+
+def test_custom_documentation_takes_precedence(project):
+    """Preserve a project's existing documentation content and section order."""
+    with (project / "pyproject.toml").open("a") as stream:
+        stream.write('[project.urls]\nDocumentation="https://docs.example.org/"\n')
+    with (project / "readme.yml").open("a") as stream:
+        stream.write(
+            "sections:\n  - title: Citation\n    content: Cite us.\n"
+            "  - title: DOCUMENTATION\n    content: Start with the tutorial.\n"
+        )
+    assert main(["--root", str(project), "readme"]) == 0
+    output = (project / "README.rst").read_text()
+    assert output.lower().count("\ndocumentation\n-------------\n") == 1
+    assert output.index("Cite us.") < output.index("Start with the tutorial.")
+    assert ":target: https://docs.example.org/" in output

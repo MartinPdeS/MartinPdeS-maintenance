@@ -118,7 +118,10 @@ that order. Set `logo: path/to/brand.svg` to override discovery. The optional
 `figure` remains available for a scientific illustration.
 
 For a GitHub repository the logo uses a raw image URL on its default branch so
-it also displays on PyPI. The documentation badge links to `[project.urls].Documentation`. A GitHub
+it also displays on PyPI. Both the documentation badge and the Documentation section use
+`[project.urls].Documentation`. The section follows the quick start. An explicit
+Documentation section in `readme.yml` takes precedence and keeps its position.
+A GitHub
 Repository, Source or Homepage URL plus `.github/workflows/deploy_coverage.yml`
 enables the CI and coverage badges. MartinPdeS repositories with
 `conda.recipe/meta.yaml` receive channel badges and an install command for the literal
