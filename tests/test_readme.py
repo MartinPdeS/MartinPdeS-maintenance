@@ -29,15 +29,19 @@ def test_minimal_generation_and_check(project, monkeypatch):
         b"ScatterPy\n=========\n\nModel light.\n\nOur *model*.\n\nInstallation\n------------\n\n"
         b".. code-block:: console\n\n   $ python -m pip install ScatterPy\n"
     )
-    assert output.read_bytes() == expected
+    rendered = output.read_bytes()
+    body, definitions = rendered.split(b"\n.. |mps-python| image::", 1)
+    assert body.replace(b"|mps-python| |mps-pypi| |mps-downloads|\n\n", b"") == expected
+    assert b"https://img.shields.io/pypi/pyversions/scatterpy.svg" in definitions
+    assert b"https://img.shields.io/pypi/dm/scatterpy.svg" in definitions
     modified = output.stat().st_mtime_ns
     assert main(["readme", "--check"]) == 0
     assert output.stat().st_mtime_ns == modified
     assert main(["readme"]) == 0
-    assert output.read_bytes() == expected
+    assert output.read_bytes() == rendered
     (project / "readme.yml").write_text("introduction: Updated.\n")
     assert main(["readme", "--check"]) == 1
-    assert output.read_bytes() == expected
+    assert output.read_bytes() == rendered
     assert output.stat().st_mtime_ns == modified
 
 
@@ -66,9 +70,11 @@ sections:
     (project / "example.py").write_text("if True:\n    raise RuntimeError('never execute')\n")
     assert main(["--root", str(project), "readme"]) == 0
     assert (
-        (project / "README.rst").read_text()
+        (project / "README.rst").read_text().split("\n.. |mps-python| image::", 1)[0]
         == """ScatterPy
 =========
+
+|mps-python| |mps-pypi| |mps-downloads|
 
 Model light.
 
@@ -139,7 +145,7 @@ def test_invalid_input_preserves_readme(project, capsys, config, field):
 
 
 @pytest.mark.parametrize("reference", ["../outside", "link"])
-@pytest.mark.parametrize("setting", ["quickstart: ", "figure:\n  path: "])
+@pytest.mark.parametrize("setting", ["quickstart: ", "figure:\n  path: ", "logo: "])
 def test_external_assets_rejected(project, reference, setting):
     """Reject traversal and symlinks resolving outside the repository."""
     outside = project.parent / "outside"
@@ -150,3 +156,38 @@ def test_external_assets_rejected(project, reference, setting):
     output.write_bytes(b"preserve")
     assert main(["--root", str(project), "readme"]) == 1
     assert output.read_bytes() == b"preserve"
+
+
+def test_conventional_branding(project):
+    """Discover a logo and derive applicable links from local project metadata."""
+    logo = project / "docs/images/logo.png"
+    logo.parent.mkdir(parents=True)
+    logo.touch()
+    for path in (".github/workflows/deploy_coverage.yml", "conda.recipe/meta.yaml"):
+        asset = project / path
+        asset.parent.mkdir(parents=True)
+        asset.touch()
+    with (project / "pyproject.toml").open("a") as stream:
+        stream.write(
+            '[project.urls]\nRepository="https://github.com/MartinPdeS/other.git"\n'
+            'Documentation="https://docs.example.org/"\n'
+        )
+    args = ["--root", str(project), "readme"]
+    assert main(args) == 0
+    output = (project / "README.rst").read_text()
+    assert (
+        ".. image:: https://raw.githubusercontent.com/MartinPdeS/other/HEAD/docs/images/logo.png"
+        in output
+    )
+    assert ":target: https://docs.example.org/" in output
+    assert "https://github.com/MartinPdeS/other/actions/workflows/deploy_coverage.yml" in output
+    assert "https://anaconda.org/martinpdes/scatterpy/badges/version.svg" in output
+    (project / "brand.svg").touch()
+    with (project / "readme.yml").open("a") as stream:
+        stream.write("logo: brand.svg\n")
+    assert main(args + ["--check"]) == 1
+    assert main(args) == 0
+    assert (
+        "https://raw.githubusercontent.com/MartinPdeS/other/HEAD/brand.svg"
+        in (project / "README.rst").read_text()
+    )

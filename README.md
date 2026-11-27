@@ -111,6 +111,19 @@ sections:
       Explain how to cite this work.
 ```
 
+The header uses the distribution name for the Python versions, PyPI release and
+monthly download badges. Logo discovery tries `<project name>/assets/logo/logo_light.svg`,
+then `logo.svg` and `logo.png` in `docs/images` and `docs/source/_static`, in
+that order. Set `logo: path/to/brand.svg` to override discovery. The optional
+`figure` remains available for a scientific illustration.
+
+For a GitHub repository the logo uses a raw image URL on its default branch so
+it also displays on PyPI. The documentation badge links to `[project.urls].Documentation`. A GitHub
+Repository, Source or Homepage URL plus `.github/workflows/deploy_coverage.yml`
+enables the CI and coverage badges. MartinPdeS repositories with
+`conda.recipe/meta.yaml` receive the standard channel badges using the normalized
+distribution name. Generation uses local metadata and files, including in check mode.
+
 Only `introduction` is required. Prose fields accept reStructuredText, including
 multiple paragraphs in YAML literal blocks (`|`). Use an HTTP(S) URL for
 `demo`. A figure requires a `path` and can include a `caption`. Figure and

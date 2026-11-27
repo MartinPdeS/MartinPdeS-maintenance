@@ -86,9 +86,49 @@ def update_readme(*, root: Path, check: bool) -> None:
     _mapping(
         value=config,
         field="readme.yml",
-        allowed={"introduction", "demo", "figure", "quickstart", "sections"},
+        allowed={"introduction", "logo", "demo", "figure", "quickstart", "sections"},
     )
     introduction = _text(value=config.get("introduction"), field="introduction")
+
+    if "logo" in config:
+        logo = _text(value=config["logo"], field="logo", single_line=True)
+    else:
+        candidates = [f"{name}/assets/logo/logo_light.svg"] + [
+            f"{folder}/logo.{extension}"
+            for folder in ("docs/images", "docs/source/_static")
+            for extension in ("svg", "png")
+        ]
+        logo = next((path for path in candidates if (root / path).is_file()), None)
+    if logo:
+        _file(root=root, value=logo, field="logo")
+        logo = Path(logo).as_posix()
+
+    urls = project.get("urls", {})
+    if not isinstance(urls, dict):
+        raise ReadmeError("[project].urls must be a table")
+    urls = {key.lower(): value for key, value in urls.items()}
+    repository = None
+    for key in ("repository", "source", "homepage"):
+        match = re.fullmatch(
+            r"https://github\.com/([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+?)(?:\.git)?/?",
+            str(urls.get(key, "")),
+            re.IGNORECASE,
+        )
+        if match:
+            repository = match[1]
+            break
+    documentation = urls.get("documentation")
+    if documentation is not None and (
+        not isinstance(documentation, str) or not re.fullmatch(r"https?://[^\s<>`]+", documentation)
+    ):
+        raise ReadmeError("[project.urls].Documentation must be an HTTP(S) URL")
+    workflows = root / ".github" / "workflows"
+    coverage = bool(repository and (workflows / "deploy_coverage.yml").is_file())
+    conda = bool(
+        repository
+        and repository.lower().startswith("martinpdes/")
+        and (root / "conda.recipe/meta.yaml").is_file()
+    )
 
     demo = None
     if "demo" in config:
@@ -136,6 +176,13 @@ def update_readme(*, root: Path, check: bool) -> None:
         environment.from_string(template)
         .render(
             name=name,
+            logo=logo,
+            repository=repository,
+            documentation=documentation,
+            docs_workflow=repository and (workflows / "deploy_documentation.yml").is_file(),
+            coverage=coverage,
+            conda=conda,
+            slug=re.sub(r"[-_.]+", "-", name).lower(),
             description=description,
             introduction=introduction,
             demo=demo,

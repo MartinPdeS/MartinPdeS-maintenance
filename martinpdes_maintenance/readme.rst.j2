@@ -1,6 +1,13 @@
 {{ name }}
 {{ "=" * name|length }}
 
+{% if logo %}
+.. image:: {{ "https://raw.githubusercontent.com/" ~ repository ~ "/HEAD/" if repository else "" }}{{ logo|urlencode if repository else logo }}
+   :alt: {{ name }} logo
+
+{% endif %}
+|mps-python| |mps-pypi| |mps-downloads|{{ " |mps-docs|" if documentation else "" }}{{ " |mps-ci| |mps-coverage|" if coverage else "" }}{{ " |mps-conda| |mps-conda-downloads| |mps-conda-release|" if conda else "" }}
+
 {{ description }}
 
 {{ introduction }}
@@ -39,3 +46,45 @@ Quick start
 
 {{ section.content }}
 {% endfor %}
+
+.. |mps-python| image:: https://img.shields.io/pypi/pyversions/{{ slug }}.svg
+   :alt: Supported Python versions
+   :target: https://pypi.org/project/{{ slug }}/
+
+.. |mps-pypi| image:: https://img.shields.io/pypi/v/{{ slug }}.svg
+   :alt: PyPI version
+   :target: https://pypi.org/project/{{ slug }}/
+
+.. |mps-downloads| image:: https://img.shields.io/pypi/dm/{{ slug }}.svg
+   :alt: Monthly PyPI downloads
+   :target: https://pypistats.org/packages/{{ slug }}
+{% if documentation %}
+
+.. |mps-docs| image:: {{ "https://github.com/" ~ repository ~ "/actions/workflows/deploy_documentation.yml/badge.svg" if docs_workflow else "https://img.shields.io/badge/docs-read-blue.svg" }}
+   :alt: Documentation
+   :target: {{ documentation }}
+{% endif %}
+{% if coverage %}
+
+.. |mps-ci| image:: https://github.com/{{ repository }}/actions/workflows/deploy_coverage.yml/badge.svg
+   :alt: Continuous integration
+   :target: https://github.com/{{ repository }}/actions/workflows/deploy_coverage.yml
+
+.. |mps-coverage| image:: https://raw.githubusercontent.com/{{ repository }}/python-coverage-comment-action-data/badge.svg
+   :alt: Test coverage
+   :target: https://htmlpreview.github.io/?https://github.com/{{ repository }}/blob/python-coverage-comment-action-data/htmlcov/index.html
+{% endif %}
+{% if conda %}
+
+.. |mps-conda| image:: https://anaconda.org/martinpdes/{{ slug }}/badges/version.svg
+   :alt: Anaconda version
+   :target: https://anaconda.org/martinpdes/{{ slug }}
+
+.. |mps-conda-downloads| image:: https://anaconda.org/martinpdes/{{ slug }}/badges/downloads.svg
+   :alt: Anaconda downloads
+   :target: https://anaconda.org/martinpdes/{{ slug }}
+
+.. |mps-conda-release| image:: https://anaconda.org/martinpdes/{{ slug }}/badges/latest_release_relative_date.svg
+   :alt: Latest Anaconda release
+   :target: https://anaconda.org/martinpdes/{{ slug }}
+{% endif %}
