@@ -31,7 +31,8 @@ def test_minimal_generation_and_check(project, monkeypatch):
     )
     rendered = output.read_bytes()
     body, definitions = rendered.split(b"\n.. |mps-python| image::", 1)
-    assert body.replace(b"|mps-python| |mps-pypi| |mps-downloads|\n\n", b"") == expected
+    title, content = body.split(b".. list-table::", 1)
+    assert title + content.split(b"|mps-downloads|\n\n", 1)[1] == expected
     assert b"https://img.shields.io/pypi/pyversions/scatterpy.svg" in definitions
     assert b"https://img.shields.io/pypi/dm/scatterpy.svg" in definitions
     modified = output.stat().st_mtime_ns
@@ -74,7 +75,18 @@ sections:
         == """ScatterPy
 =========
 
-|mps-python| |mps-pypi| |mps-downloads|
+.. list-table::
+   :widths: 35 65
+   :header-rows: 1
+
+   * - Badge
+     - Status
+   * - Python versions
+     - |mps-python|
+   * - PyPI package
+     - |mps-pypi|
+   * - PyPI downloads
+     - |mps-downloads|
 
 Model light.
 
@@ -298,7 +310,8 @@ def test_citation_and_license_from_metadata(project):
     output = project / "README.rst"
     assert main(args) == 0
     text = output.read_text()
-    assert "https://zenodo.org/badge/DOI/10.5281/zenodo.12345.svg" in text
+    assert "   * - Zenodo DOI\n     - |mps-zenodo|" in text
+    assert text.count("https://zenodo.org/badge/DOI/10.5281/zenodo.12345.svg") == 1
     assert "MIT OR Apache-2.0" in text and "<LICENSE>" in text
     assert "Contact us about support." in text
     (project / "CITATION.cff").write_text("doi: 10.1364/EXAMPLE.12345\n")

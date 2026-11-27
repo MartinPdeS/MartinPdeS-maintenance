@@ -112,7 +112,8 @@ sections:
 ```
 
 The header uses the distribution name for the Python versions, PyPI release and
-monthly download badges. Logo discovery tries `<project name>/assets/logo/logo_light.svg`,
+monthly download badges. All generated badges appear in a two-column Badge/Status
+table beneath the logo, with one row per available badge. Logo discovery tries `<project name>/assets/logo/logo_light.svg`,
 then `logo.svg` and `logo.png` in `docs/images` and `docs/source/_static`, in
 that order. Set `logo: path/to/brand.svg` to override discovery. The optional
 `figure` remains available for a scientific illustration.

@@ -6,7 +6,40 @@
    :alt: {{ name }} logo
 
 {% endif %}
-|mps-python| |mps-pypi| |mps-downloads|{{ " |mps-docs|" if documentation else "" }}{{ " |mps-ci| |mps-coverage|" if coverage else "" }}{{ " |mps-conda| |mps-conda-downloads| |mps-conda-release|" if conda else "" }}
+.. list-table::
+   :widths: 35 65
+   :header-rows: 1
+
+   * - Badge
+     - Status
+   * - Python versions
+     - |mps-python|
+{% if documentation %}
+   * - Documentation
+     - |mps-docs|
+{% endif %}
+{% if coverage %}
+   * - Continuous integration
+     - |mps-ci|
+   * - Test coverage
+     - |mps-coverage|
+{% endif %}
+   * - PyPI package
+     - |mps-pypi|
+   * - PyPI downloads
+     - |mps-downloads|
+{% if conda %}
+   * - Anaconda package
+     - |mps-conda|
+   * - Anaconda downloads
+     - |mps-conda-downloads|
+   * - Latest Anaconda release
+     - |mps-conda-release|
+{% endif %}
+{% if zenodo_doi %}
+   * - Zenodo DOI
+     - |mps-zenodo|
+{% endif %}
 
 {{ description }}
 
@@ -79,10 +112,6 @@ Read the `{{ name }} documentation <{{ documentation }}>`__.
 
 Citation
 --------
-
-.. image:: https://zenodo.org/badge/DOI/{{ zenodo_doi }}.svg
-   :alt: Cite {{ name }} on Zenodo
-   :target: https://doi.org/{{ zenodo_doi }}
 
 Cite {{ name }} using DOI `{{ zenodo_doi }} <https://doi.org/{{ zenodo_doi }}>`__.
 The Zenodo record provides the citation in BibTeX and other formats.
@@ -171,4 +200,10 @@ See the `license text <{{ "https://github.com/" ~ repository ~ "/blob/HEAD/" if 
 .. |mps-conda-release| image:: https://anaconda.org/martinpdes/{{ conda }}/badges/latest_release_relative_date.svg
    :alt: Latest Anaconda release
    :target: https://anaconda.org/martinpdes/{{ conda }}
+{% endif %}
+{% if zenodo_doi %}
+
+.. |mps-zenodo| image:: https://zenodo.org/badge/DOI/{{ zenodo_doi }}.svg
+   :alt: Cite {{ name }} on Zenodo
+   :target: https://doi.org/{{ zenodo_doi }}
 {% endif %}
