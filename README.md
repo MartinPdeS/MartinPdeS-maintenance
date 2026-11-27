@@ -132,6 +132,17 @@ that order. GitHub projects get a link to the guide on their default branch.
 A custom Contributing section takes precedence. Without a guide or custom
 section, the heading is omitted.
 
+The Citation section uses the first recognized Zenodo record URL or DOI from
+`[project.urls].Zenodo`, the top-level `doi` in `CITATION.cff`, or the `doi` in
+`.zenodo.json`. It links the DOI badge and citation to the record. Unrelated
+publication DOIs do not produce Zenodo badges.
+
+The License section displays the license expression in `[project].license`
+and links the declared license file or a conventional root `LICENSE`,
+`LICENSE.md`, `LICENSE.txt`, or `COPYING`. Use optional `license_note` prose
+in `readme.yml` for project-specific terms. Explicit Citation and License
+sections take precedence.
+
 A GitHub Repository, Source or Homepage URL plus `.github/workflows/deploy_coverage.yml`
 enables the CI and coverage badges. MartinPdeS repositories with
 `conda.recipe/meta.yaml` receive channel badges and an install command for the literal

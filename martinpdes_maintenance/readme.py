@@ -1,6 +1,7 @@
 """Generate a consumer README from repository-owned scientific content."""
 
-import re  # noqa: I001 -- repository convention keeps imports contiguous
+import json  # noqa: I001 -- repository convention keeps imports contiguous
+import re
 import tokenize
 from importlib.resources import files
 from pathlib import Path
@@ -102,6 +103,36 @@ def _contacts(*, project: dict) -> list[dict]:
     return []
 
 
+def _zenodo_doi(*, root: Path, urls: dict) -> str | None:
+    """Find a Zenodo record in project metadata without resolving URLs online."""
+
+    def recognized(*, value):
+        """Normalize a Zenodo DOI or record URL."""
+        match = re.fullmatch(
+            r"(?:(?:https://doi\.org/)?10\.5281/zenodo\.|https://zenodo\.org/records?/)([0-9]+)/?",
+            str(value).strip(),
+            re.IGNORECASE,
+        )
+        return f"10.5281/zenodo.{match[1]}" if match else None
+
+    if doi := recognized(value=urls.get("zenodo")):
+        return doi
+    for filename in ("CITATION.cff", ".zenodo.json"):
+        if not (root / filename).is_file():
+            continue
+        path = _file(root=root, value=filename, field=filename)
+        try:
+            source = path.read_text(encoding="utf-8")
+            metadata = json.loads(source) if filename.endswith(".json") else yaml.safe_load(source)
+        except (ValueError, yaml.YAMLError) as error:
+            raise ReadmeError(f"{filename}: {error}") from error
+        if not isinstance(metadata, dict):
+            raise ReadmeError(f"{filename} must contain a mapping")
+        if doi := recognized(value=metadata.get("doi")):
+            return doi
+    return None
+
+
 def update_readme(*, root: Path, check: bool) -> None:
     """Render the shared template after validating all inputs.
 
@@ -138,7 +169,15 @@ def update_readme(*, root: Path, check: bool) -> None:
     _mapping(
         value=config,
         field="readme.yml",
-        allowed={"introduction", "logo", "demo", "figure", "quickstart", "sections"},
+        allowed={
+            "introduction",
+            "logo",
+            "demo",
+            "figure",
+            "quickstart",
+            "sections",
+            "license_note",
+        },
     )
     introduction = _text(value=config.get("introduction"), field="introduction")
 
@@ -226,6 +265,27 @@ def update_readme(*, root: Path, check: bool) -> None:
         extra_sections.append({"title": title, "content": content})
 
     section_titles = {section["title"].strip().casefold() for section in extra_sections}
+    license_note = (
+        _text(value=config["license_note"], field="license_note")
+        if "license_note" in config
+        else None
+    )
+    license_label = None
+    license_file = None
+    if "license" not in section_titles:
+        declared = project.get("license")
+        if isinstance(declared, str):
+            license_label = _text(value=declared, field="[project].license", single_line=True)
+        elif isinstance(declared, dict) and "file" in declared:
+            _file(root=root, value=declared["file"], field="[project].license.file")
+            license_file = Path(declared["file"]).as_posix()
+        if not license_file:
+            for filename in ("LICENSE", "LICENSE.md", "LICENSE.txt", "COPYING"):
+                if (root / filename).is_file():
+                    _file(root=root, value=filename, field="license file")
+                    license_file = filename
+                    break
+
     contributing_guide = None
     if "contributing" not in section_titles:
         for directory in (Path("."), Path(".github"), Path("docs")):
@@ -251,6 +311,12 @@ def update_readme(*, root: Path, check: bool) -> None:
             documentation=documentation,
             section_titles=section_titles,
             contributing_guide=contributing_guide,
+            zenodo_doi=_zenodo_doi(root=root, urls=urls)
+            if "citation" not in section_titles
+            else None,
+            license_label=license_label,
+            license_file=license_file,
+            license_note=license_note,
             contacts=_contacts(project=project),
             contact_url=contact_url,
             docs_workflow=repository and (workflows / "deploy_documentation.yml").is_file(),

@@ -75,6 +75,18 @@ Read the `{{ name }} documentation <{{ documentation }}>`__.
 
 {{ section.content }}
 {% endfor %}
+{% if zenodo_doi %}
+
+Citation
+--------
+
+.. image:: https://zenodo.org/badge/DOI/{{ zenodo_doi }}.svg
+   :alt: Cite {{ name }} on Zenodo
+   :target: https://doi.org/{{ zenodo_doi }}
+
+Cite {{ name }} using DOI `{{ zenodo_doi }} <https://doi.org/{{ zenodo_doi }}>`__.
+The Zenodo record provides the citation in BibTeX and other formats.
+{% endif %}
 {% if contributing_guide %}
 
 Contributing
@@ -102,6 +114,23 @@ Contact
 {% endif %}
 {% endif %}
 
+{% if "license" not in section_titles and (license_label or license_file or license_note) %}
+License
+-------
+{% if license_label %}
+
+{{ name }} is distributed under ``{{ license_label }}``.
+{% endif %}
+{% if license_file %}
+
+See the `license text <{{ "https://github.com/" ~ repository ~ "/blob/HEAD/" if repository else "" }}{{ license_file|urlencode }}>`__.
+{% endif %}
+{% if license_note %}
+
+{{ license_note }}
+{% endif %}
+
+{% endif %}
 .. |mps-python| image:: https://img.shields.io/pypi/pyversions/{{ slug }}.svg
    :alt: Supported Python versions
    :target: https://pypi.org/project/{{ slug }}/

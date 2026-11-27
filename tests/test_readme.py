@@ -284,3 +284,49 @@ def test_contributing_guide_discovery_and_override(project):
     rendered = output.read_text()
     assert rendered.lower().count("\ncontributing\n------------\n") == 1
     assert "Send patches by email." in rendered and "blob/HEAD/CONTRIBUTING.md" not in rendered
+
+
+def test_citation_and_license_from_metadata(project):
+    """Generate a real Zenodo badge and preserve license expressions and local notes."""
+    (project / "CITATION.cff").write_text("doi: 10.5281/zenodo.12345\n")
+    with (project / "pyproject.toml").open("a") as stream:
+        stream.write('license="MIT OR Apache-2.0"\n')
+    (project / "LICENSE").touch()
+    with (project / "readme.yml").open("a") as stream:
+        stream.write("license_note: Contact us about support.\n")
+    args = ["--root", str(project), "readme"]
+    output = project / "README.rst"
+    assert main(args) == 0
+    text = output.read_text()
+    assert "https://zenodo.org/badge/DOI/10.5281/zenodo.12345.svg" in text
+    assert "MIT OR Apache-2.0" in text and "<LICENSE>" in text
+    assert "Contact us about support." in text
+    (project / "CITATION.cff").write_text("doi: 10.1364/EXAMPLE.12345\n")
+    assert main(args + ["--check"]) == 1
+    assert main(args) == 0
+    assert "zenodo.org" not in output.read_text()
+    (project / ".zenodo.json").write_text('{"doi":"10.5281/zenodo.6789"}')
+    assert main(args) == 0
+    assert "https://doi.org/10.5281/zenodo.6789" in output.read_text()
+    with (project / "readme.yml").open("a") as stream:
+        stream.write(
+            "sections:\n  - title: Citation\n    content: Cite the paper.\n"
+            "  - title: LICENSE\n    content: Special terms.\n"
+        )
+    assert main(args) == 0
+    text = output.read_text()
+    assert "Cite the paper." in text and "Special terms." in text
+    assert "zenodo.org" not in text and "MIT OR Apache-2.0" not in text
+
+
+def test_zenodo_record_url_and_legacy_license_file(project):
+    """Read explicit record and license paths even when their filenames differ."""
+    (project / "terms.txt").touch()
+    with (project / "pyproject.toml").open("a") as stream:
+        stream.write(
+            'license={file="terms.txt"}\n[project.urls]\nZenodo="https://zenodo.org/records/42"\n'
+        )
+    assert main(["--root", str(project), "readme"]) == 0
+    text = (project / "README.rst").read_text()
+    assert "https://doi.org/10.5281/zenodo.42" in text
+    assert "<terms.txt>" in text
