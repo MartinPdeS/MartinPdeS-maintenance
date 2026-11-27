@@ -20,6 +20,10 @@
 
    * - Badge
      - Status
+{% if demo %}
+   * - Web app
+     - |mps-demo|
+{% endif %}
    * - Python versions
      - |mps-python|
 {% if documentation %}
@@ -52,10 +56,6 @@
 {{ description }}
 
 {{ introduction }}
-{% if demo %}
-
-`Live demo <{{ demo }}>`_
-{% endif %}
 {% if figure %}
 
 {{ render_figure(figure) }}
@@ -183,6 +183,12 @@ See the `license text <{{ "https://github.com/" ~ repository ~ "/blob/HEAD/" if 
 .. |mps-downloads| image:: https://img.shields.io/pypi/dm/{{ slug }}.svg
    :alt: Monthly PyPI downloads
    :target: https://pypistats.org/packages/{{ slug }}
+{% if demo %}
+
+.. |mps-demo| image:: https://img.shields.io/badge/Launch-{{ name|replace('-', '--')|replace('_', '__') }}-2672d6.svg
+   :alt: Launch {{ name }}
+   :target: {{ demo }}
+{% endif %}
 {% if documentation %}
 
 .. |mps-docs| image:: {{ "https://github.com/" ~ repository ~ "/actions/workflows/deploy_documentation.yml/badge.svg" if docs_workflow else "https://img.shields.io/badge/docs-read-blue.svg" }}

@@ -155,7 +155,7 @@ clone and editable-install commands. Keep deployment details in project-owned se
 
 Only `introduction` is required. Prose fields accept reStructuredText, including
 multiple paragraphs in YAML literal blocks (`|`). Use an HTTP(S) URL for
-`demo`. A figure requires a `path` and can include a `caption`. Figure and
+`demo` to add a launch badge in the first row of the table. A figure requires a `path` and can include a `caption`. Figure and
 quick-start paths are relative to the repository root and must resolve to files
 inside it. The generator embeds the Python example as source without running it.
 To show an example and its result together, use the mapping form of `quickstart`.

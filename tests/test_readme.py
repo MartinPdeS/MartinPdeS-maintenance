@@ -33,6 +33,7 @@ def test_minimal_generation_and_check(project, monkeypatch):
     body, definitions = rendered.split(b"\n.. |mps-python| image::", 1)
     title, content = body.split(b".. list-table::", 1)
     assert title + content.split(b"|mps-downloads|\n\n", 1)[1] == expected
+    assert b"|mps-demo|" not in rendered
     assert b"https://img.shields.io/pypi/pyversions/scatterpy.svg" in definitions
     assert b"https://img.shields.io/pypi/dm/scatterpy.svg" in definitions
     modified = output.stat().st_mtime_ns
@@ -70,8 +71,10 @@ sections:
     (project / "figure.png").touch()
     (project / "example.py").write_text("if True:\n    raise RuntimeError('never execute')\n")
     assert main(["--root", str(project), "readme"]) == 0
+    rendered = (project / "README.rst").read_text()
+    assert ":alt: Launch ScatterPy\n   :target: https://example.org/demo" in rendered
     assert (
-        (project / "README.rst").read_text().split("\n.. |mps-python| image::", 1)[0]
+        rendered.split("\n.. |mps-python| image::", 1)[0]
         == """ScatterPy
 =========
 
@@ -82,6 +85,8 @@ sections:
 
    * - Badge
      - Status
+   * - Web app
+     - |mps-demo|
    * - Python versions
      - |mps-python|
    * - PyPI package
@@ -94,8 +99,6 @@ Model light.
 A *model*.
 
 Two paragraphs.
-
-`Live demo <https://example.org/demo>`_
 
 .. figure:: figure.png
 
