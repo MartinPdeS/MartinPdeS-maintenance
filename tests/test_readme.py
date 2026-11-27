@@ -270,7 +270,10 @@ def test_contact_metadata_and_override(project):
     args = ["--root", str(project), "readme"]
     assert main(args) == 0
     output = project / "README.rst"
-    assert "`Author <mailto:author@example.org?subject=ScatterPy>`__" in output.read_text()
+    assert (
+        "For questions, contact `Author <mailto:author@example.org?subject=ScatterPy>`__"
+        in output.read_text()
+    )
     with metadata.open("a") as stream:
         stream.write(
             'maintainers=[{name="The team"}, {email="support@example.org"}]\n'
@@ -280,7 +283,7 @@ def test_contact_metadata_and_override(project):
     assert main(args) == 0
     rendered = output.read_text()
     assert (
-        "* The team\n* `support@example.org <mailto:support@example.org?subject=ScatterPy>`__"
+        "For questions, contact The team or `support@example.org <mailto:support@example.org?subject=ScatterPy>`__"
         in rendered
     )
     assert "https://example.org/team" in rendered and "author@example.org" not in rendered
@@ -329,7 +332,7 @@ def test_citation_and_license_from_metadata(project):
     text = output.read_text()
     assert "   * - Zenodo DOI\n     - |mps-zenodo|" in text
     assert text.count("https://zenodo.org/badge/DOI/10.5281/zenodo.12345.svg") == 1
-    assert "MIT OR Apache-2.0" in text and "<LICENSE>" in text
+    assert "licensed under `MIT OR Apache-2.0 <LICENSE>`__." in text
     assert "Contact us about support." in text
     (project / "CITATION.cff").write_text("doi: 10.1364/EXAMPLE.12345\n")
     assert main(args + ["--check"]) == 1

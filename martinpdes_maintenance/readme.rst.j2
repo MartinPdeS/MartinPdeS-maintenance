@@ -145,35 +145,33 @@ To set up a development checkout and run the tests, follow the `contributing gui
 Contact
 -------
 
-For questions about using {{ name }} in your research, get in touch below.
-If a calculation gives an unexpected result, include the package version
-and a small example that reproduces it.
-
-{% for person in contacts %}
-{% if person.address %}
-* `{{ person.label }} <mailto:{{ person.address }}?subject={{ name }}>`__
-{% else %}
-* {{ person.label }}
-{% endif %}
-{% endfor %}
-{% if contact_url %}
 {% if contacts %}
-
+For questions, contact {% for person in contacts %}{% if not loop.first %}{{ " or " if loop.last else ", " }}{% endif %}{% if person.address %}`{{ person.label }} <mailto:{{ person.address }}?subject={{ name }}>`__{% else %}{{ person.label }}{% endif %}{% endfor %}.
 {% endif %}
-`Project contact page <{{ contact_url }}>`__.
+{% if contact_url %}
+{% if contact_url.rstrip("/").startswith("https://github.com/") and contact_url.rstrip("/").endswith("/issues") %}
+Report bugs on the `issue tracker <{{ contact_url }}>`__.
+{% else %}
+Send questions through the `project contact page <{{ contact_url }}>`__.
+{% endif %}
 {% endif %}
 {% endif %}
 
 {% if "license" not in section_titles and (license_label or license_file or license_note) %}
 License
 -------
+{% if license_file %}
+{% set license_url = ("https://github.com/" ~ repository ~ "/blob/HEAD/" if repository else "") ~ license_file|urlencode %}
 {% if license_label %}
 
-{{ name }} is distributed under ``{{ license_label }}``.
-{% endif %}
-{% if license_file %}
+{{ name }} is licensed under `{{ license_label }} <{{ license_url }}>`__.
+{% else %}
 
-See the `license text <{{ "https://github.com/" ~ repository ~ "/blob/HEAD/" if repository else "" }}{{ license_file|urlencode }}>`__.
+See the `{{ name }} license <{{ license_url }}>`__ for terms of use.
+{% endif %}
+{% elif license_label %}
+
+{{ name }} is licensed under {{ license_label }}.
 {% endif %}
 {% if license_note %}
 
