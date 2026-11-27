@@ -384,7 +384,9 @@ def update_readme(*, root: Path, check: bool) -> None:
             quickstart=quickstart,
             sections=extra_sections,
         )
+        .rstrip("\n")
         .encode("utf-8")
+        + b"\n"
     )
     output = root / "README.rst"
     if output.is_symlink():

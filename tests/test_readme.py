@@ -457,6 +457,7 @@ def test_source_only_installation(project):
     args = ["--root", str(project), "readme"]
     assert main(args) == 0
     text = (project / "README.rst").read_text()
+    assert text.endswith("\n") and not text.endswith("\n\n")
     assert "Build the extensions in place." in text and text.count("Installation") == 1
     assert "pypi.org" not in text and "pip install" not in text and "list-table" not in text
     config.write_text("introduction: Source distribution.\npypi: 'false'\n")
