@@ -126,6 +126,12 @@ Names with an email address link directly to an email draft. An optional
 `[project.urls].Contact` adds a contact page. With no contact metadata the
 section is omitted. A custom Contact section keeps its content and position.
 
+The Contributing section links to the first `CONTRIBUTING.md` or
+`CONTRIBUTING.rst` found in the repository root, `.github/`, or `docs/`, in
+that order. GitHub projects get a link to the guide on their default branch.
+A custom Contributing section takes precedence. Without a guide or custom
+section, the heading is omitted.
+
 A GitHub Repository, Source or Homepage URL plus `.github/workflows/deploy_coverage.yml`
 enables the CI and coverage badges. MartinPdeS repositories with
 `conda.recipe/meta.yaml` receive channel badges and an install command for the literal

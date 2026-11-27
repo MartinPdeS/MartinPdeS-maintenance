@@ -75,6 +75,13 @@ Read the `{{ name }} documentation <{{ documentation }}>`__.
 
 {{ section.content }}
 {% endfor %}
+{% if contributing_guide %}
+
+Contributing
+------------
+
+See the `contributing guide <{{ "https://github.com/" ~ repository ~ "/blob/HEAD/" if repository else "" }}{{ contributing_guide }}>`__.
+{% endif %}
 {% if (contacts or contact_url) and "contact" not in section_titles %}
 
 Contact

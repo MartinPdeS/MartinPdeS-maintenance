@@ -261,3 +261,26 @@ def test_contact_metadata_and_override(project):
     rendered = output.read_text()
     assert rendered.lower().count("\ncontact\n-------\n") == 1
     assert "Use our issue tracker." in rendered and "mailto:" not in rendered
+
+
+def test_contributing_guide_discovery_and_override(project):
+    """Use an existing guide, prefer the root, and preserve custom instructions."""
+    guide = project / "docs/CONTRIBUTING.rst"
+    guide.parent.mkdir()
+    guide.touch()
+    args = ["--root", str(project), "readme"]
+    output = project / "README.rst"
+    assert main(args) == 0
+    assert "<docs/CONTRIBUTING.rst>" in output.read_text()
+    (project / "CONTRIBUTING.md").touch()
+    with (project / "pyproject.toml").open("a") as stream:
+        stream.write('[project.urls]\nRepository="https://github.com/example/repository.git"\n')
+    assert main(args + ["--check"]) == 1
+    assert main(args) == 0
+    assert "<https://github.com/example/repository/blob/HEAD/CONTRIBUTING.md>" in output.read_text()
+    with (project / "readme.yml").open("a") as stream:
+        stream.write("sections:\n  - title: CONTRIBUTING\n    content: Send patches by email.\n")
+    assert main(args) == 0
+    rendered = output.read_text()
+    assert rendered.lower().count("\ncontributing\n------------\n") == 1
+    assert "Send patches by email." in rendered and "blob/HEAD/CONTRIBUTING.md" not in rendered

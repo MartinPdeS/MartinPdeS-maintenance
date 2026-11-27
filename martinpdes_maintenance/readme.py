@@ -225,6 +225,19 @@ def update_readme(*, root: Path, check: bool) -> None:
         content = _text(value=section.get("content"), field=f"{field}.content")
         extra_sections.append({"title": title, "content": content})
 
+    section_titles = {section["title"].strip().casefold() for section in extra_sections}
+    contributing_guide = None
+    if "contributing" not in section_titles:
+        for directory in (Path("."), Path(".github"), Path("docs")):
+            for filename in ("CONTRIBUTING.md", "CONTRIBUTING.rst"):
+                relative = (directory / filename).as_posix()
+                if (root / relative).is_file():
+                    _file(root=root, value=relative, field="contributing guide")
+                    contributing_guide = relative
+                    break
+            if contributing_guide:
+                break
+
     template = files(__package__).joinpath("readme.rst.j2").read_text(encoding="utf-8")
     environment = Environment(
         trim_blocks=True, undefined=StrictUndefined, keep_trailing_newline=True
@@ -236,7 +249,8 @@ def update_readme(*, root: Path, check: bool) -> None:
             logo=logo,
             repository=repository,
             documentation=documentation,
-            section_titles={section["title"].strip().casefold() for section in extra_sections},
+            section_titles=section_titles,
+            contributing_guide=contributing_guide,
             contacts=_contacts(project=project),
             contact_url=contact_url,
             docs_workflow=repository and (workflows / "deploy_documentation.yml").is_file(),
