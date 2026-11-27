@@ -462,3 +462,17 @@ def test_source_only_installation(project):
     config.write_text("introduction: Source distribution.\npypi: 'false'\n")
     assert main(args) == 1
     assert (project / "README.rst").read_text() == text
+
+
+def test_root_conda_recipe_and_unpublished_channel(project):
+    """Keep channel links for root recipes and allow an unpublished recipe to opt out."""
+    (project / "meta.yaml").write_text("package:\n  name: scatterpy\n")
+    with (project / "pyproject.toml").open("a") as stream:
+        stream.write('[project.urls]\nRepository="https://github.com/MartinPdeS/ScatterPy"\n')
+    args = ["--root", str(project), "readme"]
+    assert main(args) == 0
+    assert "conda install -c martinpdes scatterpy" in (project / "README.rst").read_text()
+    with (project / "readme.yml").open("a") as stream:
+        stream.write("conda: false\n")
+    assert main(args) == 0
+    assert "anaconda.org" not in (project / "README.rst").read_text()

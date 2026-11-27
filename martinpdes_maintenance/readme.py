@@ -53,12 +53,10 @@ def _file(*, root, value, field):
 
 def _conda_package(*, root: Path, repository: str | None) -> str | None:
     """Read a literal package name without evaluating Jinja in a consumer recipe."""
-    recipe = "conda.recipe/meta.yaml"
-    if (
-        not repository
-        or not repository.lower().startswith("martinpdes/")
-        or not (root / recipe).is_file()
-    ):
+    recipe = next(
+        (path for path in ("conda.recipe/meta.yaml", "meta.yaml") if (root / path).is_file()), None
+    )
+    if not repository or not repository.lower().startswith("martinpdes/") or recipe is None:
         return None
     source = _file(root=root, value=recipe, field="Conda recipe").read_text(encoding="utf-8")
     # Other recipe sections can contain unquoted Jinja that is not plain YAML.
@@ -190,11 +188,15 @@ def update_readme(*, root: Path, check: bool) -> None:
             "sections",
             "license_note",
             "pypi",
+            "conda",
         },
     )
     pypi = config.get("pypi", True)
     if not isinstance(pypi, bool):
         raise ReadmeError("pypi must be a boolean")
+    conda = config.get("conda", True)
+    if not isinstance(conda, bool):
+        raise ReadmeError("conda must be a boolean")
     introduction = _text(value=config.get("introduction"), field="introduction")
 
     if "logo" in config:
@@ -372,7 +374,7 @@ def update_readme(*, root: Path, check: bool) -> None:
             test_workflow=test_workflow,
             pypi=pypi,
             coverage=coverage,
-            conda=_conda_package(root=root, repository=repository),
+            conda=_conda_package(root=root, repository=repository) if conda else None,
             python_requirement=python_requirement,
             slug=re.sub(r"[-_.]+", "-", name).lower(),
             description=description,

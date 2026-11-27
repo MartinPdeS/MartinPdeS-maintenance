@@ -112,6 +112,7 @@ sections:
 ```
 
 For source-only projects, set `pypi: false` to omit PyPI badges and the PyPI install command.
+Set `conda: false` for a recipe that has not been published to the channel.
 A custom Installation section can supply project-specific build instructions.
 
 The header uses the distribution name for the Python versions, PyPI release and
@@ -150,7 +151,7 @@ sections take precedence.
 For a GitHub repository, the test badge links to the first existing workflow named
 `tests.yml`, `tests.yaml`, `test.yml`, `test.yaml`, `unit-tests.yml`, or `unit-tests.yaml` in `.github/workflows/`.
 A separate coverage badge is enabled by `deploy_coverage.yml`. MartinPdeS repositories with
-`conda.recipe/meta.yaml` receive channel badges and an install command for the literal
+`conda.recipe/meta.yaml` or a root `meta.yaml` receive channel badges and an install command for the literal
 `package.name` in the recipe. Recipes with unresolved names omit the Conda block.
 
 The Installation section uses `[project].requires-python` when declared and
