@@ -231,6 +231,14 @@ def update_readme(*, root: Path, check: bool) -> None:
     ):
         raise ReadmeError("[project.urls].Contact must be an HTTP(S) URL")
     workflows = root / ".github" / "workflows"
+    test_workflow = next(
+        (
+            filename
+            for filename in ("tests.yml", "tests.yaml", "test.yml", "test.yaml")
+            if repository and (workflows / filename).is_file()
+        ),
+        None,
+    )
     coverage = bool(repository and (workflows / "deploy_coverage.yml").is_file())
     python_requirement = project.get("requires-python")
     if python_requirement is not None:
@@ -350,6 +358,7 @@ def update_readme(*, root: Path, check: bool) -> None:
             contacts=_contacts(project=project),
             contact_url=contact_url,
             docs_workflow=repository and (workflows / "deploy_documentation.yml").is_file(),
+            test_workflow=test_workflow,
             coverage=coverage,
             conda=_conda_package(root=root, repository=repository),
             python_requirement=python_requirement,

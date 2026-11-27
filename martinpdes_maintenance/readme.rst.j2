@@ -33,23 +33,15 @@
    * - Documentation
      - |mps-docs|
 {% endif %}
-{% if coverage %}
-   * - Continuous integration
-     - |mps-ci|
-   * - Test coverage
-     - |mps-coverage|
+{% if test_workflow or coverage %}
+   * - {{ "Tests" if test_workflow else "Coverage" }}
+     - {{ ["|mps-ci|" if test_workflow else "", "|mps-coverage|" if coverage else ""]|select|join(" ") }}
 {% endif %}
-   * - PyPI package
-     - |mps-pypi|
-   * - PyPI downloads
-     - |mps-downloads|
+   * - PyPI
+     - |mps-pypi| |mps-downloads|
 {% if conda %}
-   * - Anaconda package
-     - |mps-conda|
-   * - Anaconda downloads
-     - |mps-conda-downloads|
-   * - Latest Anaconda release
-     - |mps-conda-release|
+   * - Conda
+     - |mps-conda| |mps-conda-downloads| |mps-conda-release|
 {% endif %}
 {% if zenodo_doi %}
    * - Zenodo DOI
@@ -202,11 +194,13 @@ See the `{{ name }} license <{{ license_url }}>`__ for terms of use.
    :alt: Documentation
    :target: {{ documentation }}
 {% endif %}
-{% if coverage %}
+{% if test_workflow %}
 
-.. |mps-ci| image:: https://github.com/{{ repository }}/actions/workflows/deploy_coverage.yml/badge.svg
-   :alt: Continuous integration
-   :target: https://github.com/{{ repository }}/actions/workflows/deploy_coverage.yml
+.. |mps-ci| image:: https://github.com/{{ repository }}/actions/workflows/{{ test_workflow }}/badge.svg
+   :alt: Tests
+   :target: https://github.com/{{ repository }}/actions/workflows/{{ test_workflow }}
+{% endif %}
+{% if coverage %}
 
 .. |mps-coverage| image:: https://raw.githubusercontent.com/{{ repository }}/python-coverage-comment-action-data/badge.svg
    :alt: Test coverage

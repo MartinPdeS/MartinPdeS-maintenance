@@ -113,7 +113,7 @@ sections:
 
 The header uses the distribution name for the Python versions, PyPI release and
 monthly download badges. All generated badges appear in a two-column Badge/Status
-table beneath the logo, with one row per available badge. Logo discovery tries `<project name>/assets/logo/logo_light.svg`,
+table beneath the logo, with related test, PyPI, and Conda badges grouped by row. Logo discovery tries `<project name>/assets/logo/logo_light.svg`,
 then `logo.svg` and `logo.png` in `docs/images` and `docs/source/_static`, in
 that order. Set `logo: path/to/brand.svg` to override discovery. The optional
 `figure` remains available for a scientific illustration.
@@ -144,8 +144,9 @@ and links the declared license file or a conventional root `LICENSE`,
 in `readme.yml` for project-specific terms. Explicit Citation and License
 sections take precedence.
 
-A GitHub Repository, Source or Homepage URL plus `.github/workflows/deploy_coverage.yml`
-enables the CI and coverage badges. MartinPdeS repositories with
+For a GitHub repository, the test badge links to the first existing workflow named
+`tests.yml`, `tests.yaml`, `test.yml`, or `test.yaml` in `.github/workflows/`.
+A separate coverage badge is enabled by `deploy_coverage.yml`. MartinPdeS repositories with
 `conda.recipe/meta.yaml` receive channel badges and an install command for the literal
 `package.name` in the recipe. Recipes with unresolved names omit the Conda block.
 

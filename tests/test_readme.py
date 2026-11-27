@@ -89,10 +89,8 @@ sections:
      - |mps-demo|
    * - Python versions
      - |mps-python|
-   * - PyPI package
-     - |mps-pypi|
-   * - PyPI downloads
-     - |mps-downloads|
+   * - PyPI
+     - |mps-pypi| |mps-downloads|
 
 Model light.
 
@@ -216,7 +214,19 @@ def test_conventional_branding(project):
         in output
     )
     assert ":target: https://docs.example.org/" in output
-    assert "https://github.com/MartinPdeS/other/actions/workflows/deploy_coverage.yml" in output
+    assert "   * - Coverage\n     - |mps-coverage|" in output
+    assert "|mps-ci|" not in output
+    workflow = project / ".github/workflows/tests.yaml"
+    workflow.touch()
+    assert main(args) == 0
+    output = (project / "README.rst").read_text()
+    assert "   * - Tests\n     - |mps-ci| |mps-coverage|" in output
+    assert ":target: https://github.com/MartinPdeS/other/actions/workflows/tests.yaml" in output
+    (workflow.parent / "deploy_coverage.yml").unlink()
+    assert main(args) == 0
+    output = (project / "README.rst").read_text()
+    assert "   * - Tests\n     - |mps-ci|\n" in output and "|mps-coverage|" not in output
+    assert "|mps-conda| |mps-conda-downloads| |mps-conda-release|" in output
     assert "https://anaconda.org/martinpdes/scatter-conda/badges/version.svg" in output
     assert "Requires Python ``>=3.11,<3.15``" in output
     assert "$ conda install -c martinpdes scatter-conda" in output
