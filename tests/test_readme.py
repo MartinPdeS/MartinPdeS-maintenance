@@ -185,7 +185,8 @@ def test_external_assets_rejected(project, reference, setting):
     assert output.read_bytes() == b"preserve"
 
 
-def test_conventional_branding(project):
+@pytest.mark.parametrize("filename", ["tests.yaml", "unit-tests.yml"])
+def test_conventional_branding(project, filename):
     """Discover a logo and derive applicable links from local project metadata."""
     logo = project / "docs/images/logo.png"
     logo.parent.mkdir(parents=True)
@@ -216,12 +217,12 @@ def test_conventional_branding(project):
     assert ":target: https://docs.example.org/" in output
     assert "   * - Coverage\n     - |mps-coverage|" in output
     assert "|mps-ci|" not in output
-    workflow = project / ".github/workflows/tests.yaml"
+    workflow = project / ".github/workflows" / filename
     workflow.touch()
     assert main(args) == 0
     output = (project / "README.rst").read_text()
     assert "   * - Tests\n     - |mps-ci| |mps-coverage|" in output
-    assert ":target: https://github.com/MartinPdeS/other/actions/workflows/tests.yaml" in output
+    assert f":target: https://github.com/MartinPdeS/other/actions/workflows/{filename}" in output
     (workflow.parent / "deploy_coverage.yml").unlink()
     assert main(args) == 0
     output = (project / "README.rst").read_text()

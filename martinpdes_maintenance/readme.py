@@ -234,7 +234,14 @@ def update_readme(*, root: Path, check: bool) -> None:
     test_workflow = next(
         (
             filename
-            for filename in ("tests.yml", "tests.yaml", "test.yml", "test.yaml")
+            for filename in (
+                "tests.yml",
+                "tests.yaml",
+                "test.yml",
+                "test.yaml",
+                "unit-tests.yml",
+                "unit-tests.yaml",
+            )
             if repository and (workflows / filename).is_file()
         ),
         None,

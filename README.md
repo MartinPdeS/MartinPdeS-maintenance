@@ -145,7 +145,7 @@ in `readme.yml` for project-specific terms. Explicit Citation and License
 sections take precedence.
 
 For a GitHub repository, the test badge links to the first existing workflow named
-`tests.yml`, `tests.yaml`, `test.yml`, or `test.yaml` in `.github/workflows/`.
+`tests.yml`, `tests.yaml`, `test.yml`, `test.yaml`, `unit-tests.yml`, or `unit-tests.yaml` in `.github/workflows/`.
 A separate coverage badge is enabled by `deploy_coverage.yml`. MartinPdeS repositories with
 `conda.recipe/meta.yaml` receive channel badges and an install command for the literal
 `package.name` in the recipe. Recipes with unresolved names omit the Conda block.
