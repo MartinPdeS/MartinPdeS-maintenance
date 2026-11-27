@@ -212,7 +212,7 @@ def test_conventional_branding(project):
         in output
     )
     assert (
-        "Documentation\n-------------\n\nRead the `ScatterPy documentation <https://docs.example.org/>`__."
+        "Documentation\n-------------\n\nUse the `ScatterPy documentation <https://docs.example.org/>`__ to work through"
         in output
     )
     assert ":target: https://docs.example.org/" in output

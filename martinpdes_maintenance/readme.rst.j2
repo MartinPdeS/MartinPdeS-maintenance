@@ -114,7 +114,8 @@ For an editable source installation:
 Documentation
 -------------
 
-Read the `{{ name }} documentation <{{ documentation }}>`__.
+Use the `{{ name }} documentation <{{ documentation }}>`__ to work through
+examples and look up the inputs and return values of individual functions.
 {% endif %}
 {% for section in sections %}
 
@@ -136,12 +137,17 @@ The Zenodo record provides the citation in BibTeX and other formats.
 Contributing
 ------------
 
-See the `contributing guide <{{ "https://github.com/" ~ repository ~ "/blob/HEAD/" if repository else "" }}{{ contributing_guide }}>`__.
+Bug reports, worked examples, and documentation corrections are welcome.
+To set up a development checkout and run the tests, follow the `contributing guide <{{ "https://github.com/" ~ repository ~ "/blob/HEAD/" if repository else "" }}{{ contributing_guide }}>`__.
 {% endif %}
 {% if (contacts or contact_url) and "contact" not in section_titles %}
 
 Contact
 -------
+
+For questions about using {{ name }} in your research, get in touch below.
+If a calculation gives an unexpected result, include the package version
+and a small example that reproduces it.
 
 {% for person in contacts %}
 {% if person.address %}
