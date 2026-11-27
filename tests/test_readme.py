@@ -76,6 +76,7 @@ sections:
 =========
 
 .. list-table::
+   :width: 100%
    :widths: 35 65
    :header-rows: 1
 

@@ -10,9 +10,11 @@
 {% if logo %}
 .. image:: {{ "https://raw.githubusercontent.com/" ~ repository ~ "/HEAD/" if repository else "" }}{{ logo|urlencode if repository else logo }}
    :alt: {{ name }} logo
+   :width: 100%
 
 {% endif %}
 .. list-table::
+   :width: 100%
    :widths: 35 65
    :header-rows: 1
 
