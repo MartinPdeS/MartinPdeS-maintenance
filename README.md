@@ -88,6 +88,56 @@ leaves recoverable state: inspect `git status` and `git log -1` before retrying.
 A failed tag operation can leave a successful release commit. Never blindly reset
 unrelated work.
 
+## Shared README generator
+
+In a consumer repository, put the distribution name and short description in
+`[project].name` and `[project].description` in `pyproject.toml`. Keep the
+scientific content in a UTF-8 `readme.yml` alongside it. README generation works
+independently of the release settings and project version.
+
+```yaml
+introduction: |
+  Explain the scientific problem this package solves.
+
+  Describe what the reader will reproduce in the example below.
+demo: https://example.org/demo
+figure:
+  path: docs/images/scattering-efficiency.png
+  caption: Scattering efficiency as a function of particle diameter.
+quickstart: examples/scattering_efficiency.py
+sections:
+  - title: Citation
+    content: |
+      Explain how to cite this work.
+```
+
+Only `introduction` is required. Prose fields accept reStructuredText, including
+multiple paragraphs in YAML literal blocks (`|`). Use an HTTP(S) URL for
+`demo`. A figure requires a `path` and can include a `caption`. Figure and
+quick-start paths are relative to the repository root and must resolve to files
+inside it. The generator embeds the Python example as source without running it.
+Each extra section has a single-line `title` and prose `content`, in list order.
+
+```sh
+mps-maintenance readme
+git diff -- README.rst
+mps-maintenance readme --check
+```
+
+Review and commit `README.rst` with its inputs. In CI, `--check` compares the
+working copy byte-for-byte and exits nonzero for missing or stale output. Both
+modes accept a repository root, e.g. `mps-maintenance --root ../project readme --check`.
+Consumer projects can add this shortcut to their shared Makefile:
+
+```make
+.PHONY: readme
+readme:
+	mps-maintenance readme
+```
+
+To change headings or section order for all projects, edit the packaged
+reStructuredText template in `martinpdes_maintenance/readme.rst.j2`.
+
 ## Repository doctor
 
 ```sh

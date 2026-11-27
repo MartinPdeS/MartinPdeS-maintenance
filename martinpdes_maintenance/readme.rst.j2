@@ -1,0 +1,41 @@
+{{ name }}
+{{ "=" * name|length }}
+
+{{ description }}
+
+{{ introduction }}
+{% if demo %}
+
+`Live demo <{{ demo }}>`_
+{% endif %}
+{% if figure %}
+
+.. figure:: {{ figure.path }}
+{% if figure.caption %}
+
+{{ figure.caption|indent(3, first=true) }}
+{% endif %}
+{% endif %}
+
+Installation
+------------
+
+.. code-block:: console
+
+   $ python -m pip install {{ name }}
+{% if quickstart is not none %}
+
+Quick start
+-----------
+
+.. code-block:: python
+
+{{ quickstart|indent(3, first=true) }}
+{% endif %}
+{% for section in sections %}
+
+{{ section.title }}
+{{ "-" * section.title|length }}
+
+{{ section.content }}
+{% endfor %}

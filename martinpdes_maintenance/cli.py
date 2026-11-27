@@ -1,4 +1,4 @@
-"""Command-line release operations; publishing remains the caller's responsibility."""
+"""Repository maintenance commands; publishing remains the caller's responsibility."""
 
 import argparse
 import difflib
@@ -149,7 +149,7 @@ def update_changelog(text, version, release_date, repository):
 
 
 def main(argv=None):
-    """Execute a release command and return a shell exit status."""
+    """Execute a maintenance command and return a shell exit status."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path.cwd())
     commands = parser.add_subparsers(dest="command", required=True)
@@ -159,6 +159,8 @@ def main(argv=None):
     )
     doctor.add_argument("--json", action="store_true", dest="json_output")
     doctor.add_argument("--strict", action="store_true", help="Treat warnings as failures")
+    readme = commands.add_parser("readme", help="Generate README.rst from readme.yml")
+    readme.add_argument("--check", action="store_true", help="Check README.rst without writing")
     check = commands.add_parser("check")
     check.add_argument("--version")
     tag = commands.add_parser("tag")
@@ -170,6 +172,11 @@ def main(argv=None):
     try:
         if Path(git(root, "rev-parse", "--show-toplevel")).resolve() != root:
             raise ValueError("--root must be the Git repository root")
+        if args.command == "readme":
+            from .readme import update_readme
+
+            update_readme(root=root, check=args.check)
+            return 0
         if args.command == "doctor":
             from .doctor import run_doctor
 
@@ -252,6 +259,9 @@ def main(argv=None):
         print(f"Created {args.tag}; nothing was pushed.")
         return 0
     except (ValueError, KeyError, OSError, subprocess.CalledProcessError) as error:
+        if args.command == "readme":
+            print(f"README generation failed: {error}", file=sys.stderr)
+            return 1
         print(f"Release operation failed: {error}", file=sys.stderr)
         print(
             "Inspect git status and git log before retrying a failed tag operation.",
