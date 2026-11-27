@@ -121,8 +121,12 @@ For a GitHub repository the logo uses a raw image URL on its default branch so
 it also displays on PyPI. The documentation badge links to `[project.urls].Documentation`. A GitHub
 Repository, Source or Homepage URL plus `.github/workflows/deploy_coverage.yml`
 enables the CI and coverage badges. MartinPdeS repositories with
-`conda.recipe/meta.yaml` receive the standard channel badges using the normalized
-distribution name. Generation uses local metadata and files, including in check mode.
+`conda.recipe/meta.yaml` receive channel badges and an install command for the literal
+`package.name` in the recipe. Recipes with unresolved names omit the Conda block.
+
+The Installation section uses `[project].requires-python` when declared and
+`[project].name` for the pip command. A recognized GitHub repository URL adds
+clone and editable-install commands. Keep deployment details in project-owned sections. Generation uses local metadata and files, including in check mode.
 
 Only `introduction` is required. Prose fields accept reStructuredText, including
 multiple paragraphs in YAML literal blocks (`|`). Use an HTTP(S) URL for

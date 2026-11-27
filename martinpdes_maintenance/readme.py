@@ -50,6 +50,29 @@ def _file(*, root, value, field):
     return path
 
 
+def _conda_package(*, root: Path, repository: str | None) -> str | None:
+    """Read a literal package name without evaluating Jinja in a consumer recipe."""
+    recipe = "conda.recipe/meta.yaml"
+    if (
+        not repository
+        or not repository.lower().startswith("martinpdes/")
+        or not (root / recipe).is_file()
+    ):
+        return None
+    source = _file(root=root, value=recipe, field="Conda recipe").read_text(encoding="utf-8")
+    # Other recipe sections can contain unquoted Jinja that is not plain YAML.
+    block = re.search(r"^package:[^\n]*\n(?:[ \t][^\n]*\n?|\n|\#[^\n]*\n?)*", source, re.MULTILINE)
+    if block is None:
+        return None
+    try:
+        # Preserve literal names when a sibling field uses an unquoted Jinja expression.
+        package = yaml.safe_load(re.sub(r"{{.*?}}", "UNRESOLVED", block[0]))["package"]
+    except yaml.YAMLError:
+        return None
+    name = package.get("name") if isinstance(package, dict) else None
+    return name if isinstance(name, str) and re.fullmatch(r"[a-z0-9_][a-z0-9_.-]*", name) else None
+
+
 def update_readme(*, root: Path, check: bool) -> None:
     """Render the shared template after validating all inputs.
 
@@ -124,11 +147,11 @@ def update_readme(*, root: Path, check: bool) -> None:
         raise ReadmeError("[project.urls].Documentation must be an HTTP(S) URL")
     workflows = root / ".github" / "workflows"
     coverage = bool(repository and (workflows / "deploy_coverage.yml").is_file())
-    conda = bool(
-        repository
-        and repository.lower().startswith("martinpdes/")
-        and (root / "conda.recipe/meta.yaml").is_file()
-    )
+    python_requirement = project.get("requires-python")
+    if python_requirement is not None:
+        python_requirement = _text(
+            value=python_requirement, field="[project].requires-python", single_line=True
+        )
 
     demo = None
     if "demo" in config:
@@ -181,7 +204,8 @@ def update_readme(*, root: Path, check: bool) -> None:
             documentation=documentation,
             docs_workflow=repository and (workflows / "deploy_documentation.yml").is_file(),
             coverage=coverage,
-            conda=conda,
+            conda=_conda_package(root=root, repository=repository),
+            python_requirement=python_requirement,
             slug=re.sub(r"[-_.]+", "-", name).lower(),
             description=description,
             introduction=introduction,

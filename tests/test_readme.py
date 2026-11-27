@@ -167,9 +167,12 @@ def test_conventional_branding(project):
         asset = project / path
         asset.parent.mkdir(parents=True)
         asset.touch()
+    (project / "conda.recipe/meta.yaml").write_text(
+        "package:\n  name: scatter-conda\n  version: {{ version }}\n"
+    )
     with (project / "pyproject.toml").open("a") as stream:
         stream.write(
-            '[project.urls]\nRepository="https://github.com/MartinPdeS/other.git"\n'
+            'requires-python=">=3.11,<3.15"\n[project.urls]\nRepository="https://github.com/MartinPdeS/other.git"\n'
             'Documentation="https://docs.example.org/"\n'
         )
     args = ["--root", str(project), "readme"]
@@ -181,7 +184,11 @@ def test_conventional_branding(project):
     )
     assert ":target: https://docs.example.org/" in output
     assert "https://github.com/MartinPdeS/other/actions/workflows/deploy_coverage.yml" in output
-    assert "https://anaconda.org/martinpdes/scatterpy/badges/version.svg" in output
+    assert "https://anaconda.org/martinpdes/scatter-conda/badges/version.svg" in output
+    assert "Requires Python ``>=3.11,<3.15``" in output
+    assert "$ conda install -c martinpdes scatter-conda" in output
+    assert "$ git clone https://github.com/MartinPdeS/other.git\n   $ cd other\n" in output
+    assert "$ python -m pip install -e ." in output
     (project / "brand.svg").touch()
     with (project / "readme.yml").open("a") as stream:
         stream.write("logo: brand.svg\n")
@@ -191,3 +198,16 @@ def test_conventional_branding(project):
         "https://raw.githubusercontent.com/MartinPdeS/other/HEAD/brand.svg"
         in (project / "README.rst").read_text()
     )
+
+
+def test_templated_conda_name_is_not_guessed(project):
+    """Keep the source option while omitting Conda for a nonliteral package name."""
+    recipe = project / "conda.recipe/meta.yaml"
+    recipe.parent.mkdir()
+    recipe.write_text("package:\n  name: {{ name }}\n")
+    with (project / "pyproject.toml").open("a") as stream:
+        stream.write('[project.urls]\nSource="https://github.com/MartinPdeS/checkout"\n')
+    assert main(["--root", str(project), "readme"]) == 0
+    output = (project / "README.rst").read_text()
+    assert "conda install" not in output and "|mps-conda|" not in output
+    assert "$ cd checkout" in output

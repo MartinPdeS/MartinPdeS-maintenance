@@ -26,10 +26,32 @@
 
 Installation
 ------------
+{% if python_requirement %}
+
+Requires Python ``{{ python_requirement }}``.
+{% endif %}
 
 .. code-block:: console
 
    $ python -m pip install {{ name }}
+{% if conda %}
+
+Install from the ``martinpdes`` Conda channel:
+
+.. code-block:: console
+
+   $ conda install -c martinpdes {{ conda }}
+{% endif %}
+{% if repository %}
+
+For an editable source installation:
+
+.. code-block:: console
+
+   $ git clone https://github.com/{{ repository }}.git
+   $ cd {{ repository.split('/')[-1] }}
+   $ python -m pip install -e .
+{% endif %}
 {% if quickstart is not none %}
 
 Quick start
@@ -76,15 +98,15 @@ Quick start
 {% endif %}
 {% if conda %}
 
-.. |mps-conda| image:: https://anaconda.org/martinpdes/{{ slug }}/badges/version.svg
+.. |mps-conda| image:: https://anaconda.org/martinpdes/{{ conda }}/badges/version.svg
    :alt: Anaconda version
-   :target: https://anaconda.org/martinpdes/{{ slug }}
+   :target: https://anaconda.org/martinpdes/{{ conda }}
 
-.. |mps-conda-downloads| image:: https://anaconda.org/martinpdes/{{ slug }}/badges/downloads.svg
+.. |mps-conda-downloads| image:: https://anaconda.org/martinpdes/{{ conda }}/badges/downloads.svg
    :alt: Anaconda downloads
-   :target: https://anaconda.org/martinpdes/{{ slug }}
+   :target: https://anaconda.org/martinpdes/{{ conda }}
 
-.. |mps-conda-release| image:: https://anaconda.org/martinpdes/{{ slug }}/badges/latest_release_relative_date.svg
+.. |mps-conda-release| image:: https://anaconda.org/martinpdes/{{ conda }}/badges/latest_release_relative_date.svg
    :alt: Latest Anaconda release
-   :target: https://anaconda.org/martinpdes/{{ slug }}
+   :target: https://anaconda.org/martinpdes/{{ conda }}
 {% endif %}
