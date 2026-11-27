@@ -4,7 +4,7 @@ import re  # noqa: I001 -- repository convention keeps imports contiguous
 import tokenize
 from importlib.resources import files
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import quote, urlsplit
 import yaml
 from jinja2 import Environment, StrictUndefined
 
@@ -71,6 +71,35 @@ def _conda_package(*, root: Path, repository: str | None) -> str | None:
         return None
     name = package.get("name") if isinstance(package, dict) else None
     return name if isinstance(name, str) and re.fullmatch(r"[a-z0-9_][a-z0-9_.-]*", name) else None
+
+
+def _contacts(*, project: dict) -> list[dict]:
+    """Read maintainer contacts in order, falling back to the project authors."""
+    for field in ("maintainers", "authors"):
+        entries = project.get(field, [])
+        if not isinstance(entries, list):
+            raise ReadmeError(f"[project].{field} must be a list")
+        contacts = []
+        for index, entry in enumerate(entries):
+            location = f"[project].{field}[{index}]"
+            if not isinstance(entry, dict) or not ("name" in entry or "email" in entry):
+                raise ReadmeError(f"{location} requires a name or email")
+            name = (
+                _text(value=entry["name"], field=f"{location}.name", single_line=True)
+                if "name" in entry
+                else ""
+            )
+            email = (
+                _text(value=entry["email"], field=f"{location}.email", single_line=True)
+                if "email" in entry
+                else ""
+            )
+            # Names and addresses are plain metadata inserted into RST inline markup.
+            label = re.sub(r"([\\`*_<>|])", r"\\\1", name or email)
+            contacts.append({"label": label, "address": quote(email, safe="@+")})
+        if contacts:
+            return contacts
+    return []
 
 
 def update_readme(*, root: Path, check: bool) -> None:
@@ -145,6 +174,11 @@ def update_readme(*, root: Path, check: bool) -> None:
         not isinstance(documentation, str) or not re.fullmatch(r"https?://[^\s<>`]+", documentation)
     ):
         raise ReadmeError("[project.urls].Documentation must be an HTTP(S) URL")
+    contact_url = urls.get("contact")
+    if contact_url is not None and (
+        not isinstance(contact_url, str) or not re.fullmatch(r"https?://[^\s<>`]+", contact_url)
+    ):
+        raise ReadmeError("[project.urls].Contact must be an HTTP(S) URL")
     workflows = root / ".github" / "workflows"
     coverage = bool(repository and (workflows / "deploy_coverage.yml").is_file())
     python_requirement = project.get("requires-python")
@@ -202,9 +236,9 @@ def update_readme(*, root: Path, check: bool) -> None:
             logo=logo,
             repository=repository,
             documentation=documentation,
-            custom_documentation=any(
-                section["title"].strip().casefold() == "documentation" for section in extra_sections
-            ),
+            section_titles={section["title"].strip().casefold() for section in extra_sections},
+            contacts=_contacts(project=project),
+            contact_url=contact_url,
             docs_workflow=repository and (workflows / "deploy_documentation.yml").is_file(),
             coverage=coverage,
             conda=_conda_package(root=root, repository=repository),

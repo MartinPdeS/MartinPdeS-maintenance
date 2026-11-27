@@ -231,3 +231,33 @@ def test_custom_documentation_takes_precedence(project):
     assert output.lower().count("\ndocumentation\n-------------\n") == 1
     assert output.index("Cite us.") < output.index("Start with the tutorial.")
     assert ":target: https://docs.example.org/" in output
+
+
+def test_contact_metadata_and_override(project):
+    """Prefer maintainers, retain ordering, and respect a custom Contact section."""
+    metadata = project / "pyproject.toml"
+    with metadata.open("a") as stream:
+        stream.write('authors=[{name="Author",email="author@example.org"}]\n')
+    args = ["--root", str(project), "readme"]
+    assert main(args) == 0
+    output = project / "README.rst"
+    assert "`Author <mailto:author@example.org?subject=ScatterPy>`__" in output.read_text()
+    with metadata.open("a") as stream:
+        stream.write(
+            'maintainers=[{name="The team"}, {email="support@example.org"}]\n'
+            '[project.urls]\nContact="https://example.org/team"\n'
+        )
+    assert main(args + ["--check"]) == 1
+    assert main(args) == 0
+    rendered = output.read_text()
+    assert (
+        "* The team\n* `support@example.org <mailto:support@example.org?subject=ScatterPy>`__"
+        in rendered
+    )
+    assert "https://example.org/team" in rendered and "author@example.org" not in rendered
+    with (project / "readme.yml").open("a") as stream:
+        stream.write("sections:\n  - title: CONTACT\n    content: Use our issue tracker.\n")
+    assert main(args) == 0
+    rendered = output.read_text()
+    assert rendered.lower().count("\ncontact\n-------\n") == 1
+    assert "Use our issue tracker." in rendered and "mailto:" not in rendered

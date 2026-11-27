@@ -61,7 +61,7 @@ Quick start
 
 {{ quickstart|indent(3, first=true) }}
 {% endif %}
-{% if documentation and not custom_documentation %}
+{% if documentation and "documentation" not in section_titles %}
 
 Documentation
 -------------
@@ -75,6 +75,25 @@ Read the `{{ name }} documentation <{{ documentation }}>`__.
 
 {{ section.content }}
 {% endfor %}
+{% if (contacts or contact_url) and "contact" not in section_titles %}
+
+Contact
+-------
+
+{% for person in contacts %}
+{% if person.address %}
+* `{{ person.label }} <mailto:{{ person.address }}?subject={{ name }}>`__
+{% else %}
+* {{ person.label }}
+{% endif %}
+{% endfor %}
+{% if contact_url %}
+{% if contacts %}
+
+{% endif %}
+`Project contact page <{{ contact_url }}>`__.
+{% endif %}
+{% endif %}
 
 .. |mps-python| image:: https://img.shields.io/pypi/pyversions/{{ slug }}.svg
    :alt: Supported Python versions
