@@ -158,6 +158,22 @@ multiple paragraphs in YAML literal blocks (`|`). Use an HTTP(S) URL for
 `demo`. A figure requires a `path` and can include a `caption`. Figure and
 quick-start paths are relative to the repository root and must resolve to files
 inside it. The generator embeds the Python example as source without running it.
+To show an example and its result together, use the mapping form of `quickstart`.
+Only `source` is required. The optional figure appears directly below the code.
+Commit the image alongside the script; the generator reads both paths locally
+and never runs the example. The short `quickstart: examples/example.py` form
+still works.
+
+```yaml
+quickstart:
+  title: Fit a fluorescence calibration
+  description: Fit measured bead peaks to their reference intensities.
+  source: examples/fluorescence_calibration.py
+  figure:
+    path: docs/images/fluorescence-calibration.png
+    caption: Measured peaks and the fitted calibration curve.
+```
+
 Each extra section has a single-line `title` and prose `content`, in list order.
 
 ```sh

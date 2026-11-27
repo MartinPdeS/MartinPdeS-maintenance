@@ -141,6 +141,11 @@ An archive.
         ("introduction: Test\nfigure: {file: fig.png}", "file"),
         ("introduction: Test\nfigure: {}", "figure.path"),
         ("introduction: Test\nquickstart: missing.py", "missing.py"),
+        ("introduction: Test\nquickstart: {title: Fit}", "quickstart.source"),
+        (
+            "introduction: Test\nquickstart: {source: readme.yml, figure: {}}",
+            "quickstart.figure.path",
+        ),
         ("introduction: Test\nsections: {}", "sections"),
         ("introduction: Test\nsections: [{title: Citation}]", "content"),
         ("introduction: Test\ndemo: []", "demo"),
@@ -157,7 +162,15 @@ def test_invalid_input_preserves_readme(project, capsys, config, field):
 
 
 @pytest.mark.parametrize("reference", ["../outside", "link"])
-@pytest.mark.parametrize("setting", ["quickstart: ", "figure:\n  path: ", "logo: "])
+@pytest.mark.parametrize(
+    "setting",
+    [
+        "quickstart: ",
+        "figure:\n  path: ",
+        "logo: ",
+        "quickstart:\n  source: readme.yml\n  figure:\n    path: ",
+    ],
+)
 def test_external_assets_rejected(project, reference, setting):
     """Reject traversal and symlinks resolving outside the repository."""
     outside = project.parent / "outside"
@@ -343,3 +356,53 @@ def test_zenodo_record_url_and_legacy_license_file(project):
     text = (project / "README.rst").read_text()
     assert "https://doi.org/10.5281/zenodo.42" in text
     assert "<terms.txt>" in text
+
+
+def test_illustrated_quickstart(project):
+    """Keep the worked example, literal code and caption together before extra sections."""
+    (project / "readme.yml").write_text("""introduction: Intro.
+quickstart:
+  title: Calibration fit
+  description: Fit *four* measurements.
+  source: fit.py
+  figure:
+    path: fit.png
+    caption: |
+      Measured peaks.
+
+      Line of best fit.
+sections:
+  - title: Data
+    content: Sample data.
+""")
+    (project / "fit.py").write_text("if True:\n    raise RuntimeError('never execute')\n")
+    (project / "fit.png").touch()
+    args = ["--root", str(project), "readme"]
+    assert main(args) == 0
+    output = project / "README.rst"
+    rendered = output.read_text()
+    assert (
+        """Calibration fit
+---------------
+
+Fit *four* measurements.
+
+.. code-block:: python
+
+   if True:
+       raise RuntimeError('never execute')
+
+.. figure:: fit.png
+
+   Measured peaks.
+
+   Line of best fit.
+
+Data
+----"""
+        in rendered
+    )
+    assert main(args + ["--check"]) == 0
+    (project / "fit.png").unlink()
+    assert main(args) == 1
+    assert output.read_text() == rendered

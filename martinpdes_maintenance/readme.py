@@ -133,6 +133,18 @@ def _zenodo_doi(*, root: Path, urls: dict) -> str | None:
     return None
 
 
+def _figure(*, root: Path, value, field: str) -> dict:
+    """Validate a repository image path and optional reStructuredText caption."""
+    settings = _mapping(value=value, field=field, allowed={"path", "caption"})
+    _file(root=root, value=settings.get("path"), field=f"{field}.path")
+    caption = (
+        _text(value=settings["caption"], field=f"{field}.caption")
+        if "caption" in settings
+        else None
+    )
+    return {"path": Path(settings["path"]).as_posix(), "caption": caption}
+
+
 def update_readme(*, root: Path, check: bool) -> None:
     """Render the shared template after validating all inputs.
 
@@ -233,25 +245,43 @@ def update_readme(*, root: Path, check: bool) -> None:
         if url.scheme not in {"http", "https"} or not url.hostname or re.search(r"[\s<>`]", demo):
             raise ReadmeError("demo must be an HTTP(S) URL")
 
-    figure = None
-    if "figure" in config:
-        settings = _mapping(value=config["figure"], field="figure", allowed={"path", "caption"})
-        _file(root=root, value=settings.get("path"), field="figure.path")
-        caption = (
-            _text(value=settings["caption"], field="figure.caption")
-            if "caption" in settings
-            else None
-        )
-        figure = {"path": Path(settings["path"]).as_posix(), "caption": caption}
+    figure = (
+        _figure(root=root, value=config["figure"], field="figure") if "figure" in config else None
+    )
 
     quickstart = None
     if "quickstart" in config:
-        example = _file(root=root, value=config["quickstart"], field="quickstart")
+        value = config["quickstart"]
+        settings = (
+            _mapping(
+                value=value,
+                field="quickstart",
+                allowed={"source", "title", "description", "figure"},
+            )
+            if isinstance(value, dict)
+            else {"source": value}
+        )
+        field = "quickstart.source" if isinstance(value, dict) else "quickstart"
+        example = _file(root=root, value=settings.get("source"), field=field)
         try:
             with tokenize.open(example) as stream:
-                quickstart = stream.read().removesuffix("\n")
+                source = stream.read().removesuffix("\n")
         except (SyntaxError, UnicodeError) as error:
-            raise ReadmeError(f"quickstart: cannot decode {example}: {error}") from error
+            raise ReadmeError(f"{field}: cannot decode {example}: {error}") from error
+        quickstart = {
+            "source": source,
+            "title": _text(
+                value=settings.get("title", "Quick start"),
+                field="quickstart.title",
+                single_line=True,
+            ),
+            "description": _text(value=settings["description"], field="quickstart.description")
+            if "description" in settings
+            else None,
+            "figure": _figure(root=root, value=settings["figure"], field="quickstart.figure")
+            if "figure" in settings
+            else None,
+        }
 
     sections = config.get("sections", [])
     if not isinstance(sections, list):
