@@ -410,3 +410,24 @@ Data
     (project / "fit.png").unlink()
     assert main(args) == 1
     assert output.read_text() == rendered
+
+
+def test_github_figure_urls(project):
+    """Use portable, encoded default-branch URLs for both validated figure paths."""
+    (project / "result plot.png").touch()
+    (project / "measure.py").write_text("print(1)\n")
+    with (project / "pyproject.toml").open("a") as stream:
+        stream.write('[project.urls]\nRepository="https://github.com/example/fibers"\n')
+    with (project / "readme.yml").open("a") as stream:
+        stream.write(
+            "figure: {path: result plot.png}\nquickstart:\n  source: measure.py\n"
+            "  figure: {path: result plot.png}\n"
+        )
+    assert main(["--root", str(project), "readme"]) == 0
+    output = (project / "README.rst").read_text()
+    assert (
+        output.count(
+            ".. figure:: https://raw.githubusercontent.com/example/fibers/HEAD/result%20plot.png"
+        )
+        == 2
+    )

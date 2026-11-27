@@ -1,5 +1,8 @@
+{% macro image_url(path) -%}
+{{ "https://raw.githubusercontent.com/" ~ repository ~ "/HEAD/" if repository else "" }}{{ path|urlencode if repository else path }}
+{%- endmacro %}
 {% macro render_figure(figure) -%}
-.. figure:: {{ figure.path }}{% if figure.caption %}
+.. figure:: {{ image_url(figure.path) }}{% if figure.caption %}
 
 
 {{ figure.caption|indent(3, first=true) }}{% endif %}
@@ -8,7 +11,7 @@
 {{ "=" * name|length }}
 
 {% if logo %}
-.. image:: {{ "https://raw.githubusercontent.com/" ~ repository ~ "/HEAD/" if repository else "" }}{{ logo|urlencode if repository else logo }}
+.. image:: {{ image_url(logo) }}
    :alt: {{ name }} logo
    :width: 100%
 

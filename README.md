@@ -118,8 +118,8 @@ then `logo.svg` and `logo.png` in `docs/images` and `docs/source/_static`, in
 that order. Set `logo: path/to/brand.svg` to override discovery. The optional
 `figure` remains available for a scientific illustration.
 
-For a GitHub repository the logo uses a raw image URL on its default branch so
-it also displays on PyPI. Both the documentation badge and the Documentation section use
+For GitHub repositories, the logo and figures use raw image URLs on the default
+branch so they also display on PyPI. Commit the referenced images to that branch. Both the documentation badge and the Documentation section use
 `[project.urls].Documentation`. The section follows the quick start. An explicit
 Documentation section in `readme.yml` takes precedence and keeps its position.
 The Contact section lists `[project].maintainers`, falling back to `authors`.
